@@ -3,18 +3,21 @@ import { ChatbotPage } from '../src/pages/ChatBotPage';
 import { validateAIResponseScore } from '../src/helpers/aiValidator';
 import fs from 'fs';
 import prompts from '../test-data/ai-prompts.json';
-
-const REPORT_PATH = 'reports/ai-score-report.json';
+import scoreConfig from '../test-data/score-config.json';
 
 test.describe('AI Batch Quality Scoring', () => {
 
-  test('Run AI scoring for all prompts', async ({ page }) => {
+  let chat: ChatbotPage;
 
-    const chat = new ChatbotPage(page);
-    const results: any[] = [];
-
+  test.beforeEach(async ({ page }) => {
+    chat = new ChatbotPage(page);
     await chat.openApp();
     await chat.openChat();
+  });
+
+  test('Run AI scoring for all prompts', async () => {
+
+    const results: any[] = [];
 
     for (const prompt of prompts) {
 
@@ -49,15 +52,15 @@ test.describe('AI Batch Quality Scoring', () => {
     }
 
     // Ensure reports folder exists
-    fs.mkdirSync('reports', { recursive: true });
+    fs.mkdirSync(scoreConfig.reportsDir, { recursive: true });
 
     // Write JSON report
     fs.writeFileSync(
-      REPORT_PATH,
+      scoreConfig.reportPath,
       JSON.stringify(results, null, 2)
     );
 
-    console.log('AI Score Report Generated:', REPORT_PATH);
+    console.log('AI Score Report Generated:', scoreConfig.reportPath);
 
   });
 

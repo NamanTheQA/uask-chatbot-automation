@@ -1,0 +1,5 @@
+{
+  "publicServiceQuery": "How can I check UAE visa status?",
+  "slaTestMessage": "Hello",
+  "slaThresholdMs": 7000
+}

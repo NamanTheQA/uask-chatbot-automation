@@ -1,104 +1,69 @@
-import { Page, expect } from '@playwright/test';
+import { Page } from '@playwright/test';
+import { ChatLocators } from './ChatLocators';
+import { ChatActions } from './ChatActions';
+import { ChatDataExtractor } from './ChatDataExtractor';
 
 export class ChatbotPage {
 
-  constructor(private page: Page) {}
+  private locators: ChatLocators;
+  private actions: ChatActions;
+  private extractor: ChatDataExtractor;
 
-  // ============================
-  // Locators
-  // ============================
+  // Public access to chatWindow for tests
+  public get chatWindow() {
+    return this.locators.chatWindow;
+  }
 
-  private chatButton = this.page.locator(
-    'button:has-text("Ask"), button[aria-label*="Ask"]'
-  );
+  constructor(page: Page) {
+    this.locators = new ChatLocators(page);
+    this.actions = new ChatActions(page, this.locators);
+    this.extractor = new ChatDataExtractor(this.locators);
+  }
 
-  private chatWindow = this.page.locator('[role="dialog"]');
-
-  private inputBox = this.page.locator('textarea, input[type="text"]');
-
-  private userMessage = this.page.locator('.user-message, .message');
-
-  private aiMessage = this.page.locator('.ai-message, [data-role="ai"]');
-
-  private loader = this.page.locator('.typing, .loader, .dots');
-
-  private arabicToggle = this.page.locator(
-    'button:has-text("AR"), a:has-text("AR")'
-  );
-
-  private englishToggle = this.page.locator(
-    'button:has-text("EN"), a:has-text("EN")'
-  );
-
-  // ============================
-  // Page Actions
-  // ============================
-
+  // Delegate methods from ChatActions
   async openApp() {
-    await this.page.goto('/');
+    return this.actions.openApp();
   }
 
   async openChat() {
-    await expect(this.chatButton.first()).toBeVisible();
-    await this.chatButton.first().click();
-    await expect(this.chatWindow).toBeVisible();
+    return this.actions.openChat();
   }
 
   async sendMessage(message: string) {
-    await this.inputBox.fill(message);
-    await this.inputBox.press('Enter');
+    return this.actions.sendMessage(message);
+  }
+
+  async waitForAIResponse() {
+    return this.actions.waitForAIResponse();
   }
 
   async switchLanguage(lang: 'AR' | 'EN') {
-  if (lang === 'AR') {
-    await this.switchToArabic();
-  } else {
-    await this.switchToEnglish();
+    return this.actions.switchLanguage(lang);
   }
-}
-
-  async waitForAIResponse() {
-
-    // Optional loader sync
-    await this.loader.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
-    await this.loader.waitFor({ state: 'hidden', timeout: 25000 }).catch(() => {});
-
-    // Ensure AI message rendered
-    await this.aiMessage.last().waitFor({ timeout: 25000 });
-  }
-
-  // ============================
-  // Data Getters
-  // ============================
-
-  async getLastUserMessage() {
-    return await this.userMessage.last().innerText();
-  }
-
-  async getLastAIResponse() {
-    return await this.aiMessage.last().innerText();
-  }
-
-  async getInputValue() {
-    return await this.inputBox.inputValue();
-  }
-
-  async getLastMessageDirection() {
-    return await this.userMessage.last().evaluate(el =>
-      window.getComputedStyle(el).direction
-    );
-  }
-
-  // ============================
-  // Language Controls
-  // ============================
 
   async switchToArabic() {
-    await this.arabicToggle.first().click();
+    return this.actions.switchToArabic();
   }
 
   async switchToEnglish() {
-    await this.englishToggle.first().click();
+    return this.actions.switchToEnglish();
+  }
+
+  // Delegate methods from ChatDataExtractor
+  async getLastUserMessage() {
+    return this.extractor.getLastUserMessage();
+  }
+
+  async getLastAIResponse() {
+    return this.extractor.getLastAIResponse();
+  }
+
+  async getInputValue() {
+    return this.extractor.getInputValue();
+  }
+
+  async getLastMessageDirection() {
+    return this.extractor.getLastMessageDirection();
   }
 
 }

@@ -1,29 +1,25 @@
 import { test, expect } from '@playwright/test';
 import { ChatbotPage } from '../src/pages/ChatBotPage';
-import languages from '../test-data/language-data.json';
+import uiData from '../test-data/ui-data.json';
 
-test.describe('Data Driven Multilingual Validation', () => {
+test.describe('Multilingual UI Validation (Data Driven)', () => {
 
-  for (const langData of languages) {
+  for (const langData of uiData.languages) {
 
-    test(`Validate ${langData.lang} language UI behavior`, async ({ page }) => {
+    test(`Validate ${langData.lang} layout and localization`, async ({ page }) => {
 
       const chat = new ChatbotPage(page);
 
       await chat.openApp();
       await chat.openChat();
-
-      // Switch language dynamically
+      
       await chat.switchLanguage(langData.lang as 'AR' | 'EN');
 
-      // Send localized message
       await chat.sendMessage(langData.message);
 
-      // Direction validation
       const direction = await chat.getLastMessageDirection();
       expect(direction).toBe(langData.direction);
 
-      // Placeholder localization validation
       const placeholder = await page
         .locator('textarea, input[type="text"]')
         .getAttribute('placeholder');

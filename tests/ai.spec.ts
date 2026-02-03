@@ -1,45 +1,41 @@
 import { test, expect } from '@playwright/test';
 import { ChatbotPage } from '../src/pages/ChatBotPage';
 import { validateAIResponse } from '../src/helpers/aiValidator';
+import aiData from '../test-data/ai-data.json';
 
 test.describe('AI Functional Validation (Pass/Fail)', () => {
 
-  test('AI responds correctly for public service query', async ({ page }) => {
+  let chat: ChatbotPage;
 
-    const chat = new ChatbotPage(page);
-
+  test.beforeEach(async ({ page }) => {
+    chat = new ChatbotPage(page);
     await chat.openApp();
     await chat.openChat();
+  });
 
-    const question = 'How can I check UAE visa status?';
+  test('AI responds correctly for public service query', async () => {
 
-    await chat.sendMessage(question);
+    await chat.sendMessage(aiData.publicServiceQuery);
 
     await chat.waitForAIResponse();
 
     const aiText = await chat.getLastAIResponse();
 
-    // Hard functional gate
     validateAIResponse(aiText);
 
   });
 
-  test('Validate AI response time SLA', async ({ page }) => {
-
-    const chat = new ChatbotPage(page);
-
-    await chat.openApp();
-    await chat.openChat();
+  test('Validate AI response time SLA', async () => {
 
     const startTime = Date.now();
 
-    await chat.sendMessage('Hello');
+    await chat.sendMessage(aiData.slaTestMessage);
 
     await chat.waitForAIResponse();
 
     const responseTime = Date.now() - startTime;
 
-    expect(responseTime).toBeLessThan(7000);
+    expect(responseTime).toBeLessThan(aiData.slaThresholdMs);
 
   });
 

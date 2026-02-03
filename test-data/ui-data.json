@@ -1,0 +1,26 @@
+{
+  "basicMessages": {
+    "english": "Hello",
+    "arabic": "مرحبا",
+    "aiQuery": "How can I check UAE visa status?"
+  },
+
+  "languages": [
+    {
+      "lang": "AR",
+      "toggle": "AR",
+      "message": "مرحبا",
+      "direction": "rtl",
+      "placeholderKeyword": "اكتب"
+    },
+    {
+      "lang": "EN",
+      "toggle": "EN",
+      "message": "Hello",
+      "direction": "ltr",
+      "placeholderKeyword": "type"
+    }
+  ],
+
+  "minAiResponseLength": 10
+}

@@ -1,82 +1,45 @@
 import { test, expect } from '@playwright/test';
 import { ChatbotPage } from '../src/pages/ChatBotPage';
+import uiData from '../test-data/ui-data.json';
 
-test.describe('U-Ask Chatbot UI Behavior', () => {
+test.describe('U-Ask Chatbot UI Behavior (Data Driven)', () => {
 
-  test('Chat widget loads and opens correctly', async ({ page }) => {
+  let chat: ChatbotPage;
 
-    const chat = new ChatbotPage(page);
-
+  test.beforeEach(async ({ page }) => {
+    chat = new ChatbotPage(page);
     await chat.openApp();
     await chat.openChat();
-
   });
 
-  test('User can send message via input box', async ({ page }) => {
+  test('Chat widget loads and opens correctly', async () => {
+    expect(chat.chatWindow).toBeVisible();
+  });
 
-    const chat = new ChatbotPage(page);
-
-    await chat.openApp();
-    await chat.openChat();
-
-    await chat.sendMessage('Hello');
+  test('User can send message via input box', async () => {
+    await chat.sendMessage(uiData.basicMessages.english);
 
     const userText = await chat.getLastUserMessage();
-    expect(userText).toContain('Hello');
 
+    expect(userText).toContain(uiData.basicMessages.english);
   });
 
-  test('AI response renders properly', async ({ page }) => {
-
-    const chat = new ChatbotPage(page);
-
-    await chat.openApp();
-    await chat.openChat();
-
-    await chat.sendMessage('How can I check UAE visa status?');
+  test('AI response renders properly', async () => {
+    await chat.sendMessage(uiData.basicMessages.aiQuery);
 
     await chat.waitForAIResponse();
 
     const aiText = await chat.getLastAIResponse();
-    expect(aiText.length).toBeGreaterThan(10);
 
+    expect(aiText.length).toBeGreaterThan(uiData.minAiResponseLength);
   });
 
-  test('Input is cleared after sending message', async ({ page }) => {
-
-    const chat = new ChatbotPage(page);
-
-    await chat.openApp();
-    await chat.openChat();
-
-    await chat.sendMessage('Ping test');
+  test('Input is cleared after sending message', async () => {
+    await chat.sendMessage(uiData.basicMessages.english);
 
     const inputValue = await chat.getInputValue();
+
     expect(inputValue).toBe('');
-
-  });
-
-  test('Language toggle works with correct LTR and RTL layout', async ({ page }) => {
-
-    const chat = new ChatbotPage(page);
-
-    await chat.openApp();
-    await chat.openChat();
-
-    // Arabic RTL
-    await chat.switchToArabic();
-    await chat.sendMessage('مرحبا');
-
-    const rtlDirection = await chat.getLastMessageDirection();
-    expect(rtlDirection).toBe('rtl');
-
-    // English LTR
-    await chat.switchToEnglish();
-    await chat.sendMessage('Hello');
-
-    const ltrDirection = await chat.getLastMessageDirection();
-    expect(ltrDirection).toBe('ltr');
-
   });
 
 });
