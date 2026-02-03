@@ -49,6 +49,14 @@ export class ChatbotPage {
     await this.inputBox.press('Enter');
   }
 
+  async switchLanguage(lang: 'AR' | 'EN') {
+  if (lang === 'AR') {
+    await this.switchToArabic();
+  } else {
+    await this.switchToEnglish();
+  }
+}
+
   async waitForAIResponse() {
 
     // Optional loader sync
