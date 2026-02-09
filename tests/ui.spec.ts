@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { ChatbotPage } from '../src/pages/ChatBotPage';
+import { ChatbotPage } from '../src/pages/ChatbotPage';
 import uiData from '../test-data/ui-data.json';
 
 test.describe('U-Ask Chatbot UI Behavior (Data Driven)', () => {
@@ -9,7 +9,7 @@ test.describe('U-Ask Chatbot UI Behavior (Data Driven)', () => {
   test.beforeEach(async ({ page }) => {
     chat = new ChatbotPage(page);
     await chat.openApp();
-    await chat.openChat();
+    await chat.isChatWindowDisplayed();
   });
 
   test('Chat widget loads and opens correctly', async () => {
@@ -40,6 +40,22 @@ test.describe('U-Ask Chatbot UI Behavior (Data Driven)', () => {
     const inputValue = await chat.getInputValue();
 
     expect(inputValue).toBe('');
+  });
+
+  test('Send button is disabled after sending message', async () => {
+    await chat.sendMessage(uiData.basicMessages.english);
+
+    await chat.waitForAIResponse();
+
+    await expect(chat.sendButton).toBeDisabled();
+  });
+
+  test('Send button is disabled after clearing message', async () => {
+    await chat.enterMessage(uiData.basicMessages.english);
+
+    await chat.clearMessage();
+
+    await expect(chat.sendButton).toBeDisabled();
   });
 
 });

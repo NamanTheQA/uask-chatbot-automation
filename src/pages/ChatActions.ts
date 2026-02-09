@@ -12,41 +12,83 @@ export class ChatActions {
 
   async openApp() {
     await this.page.goto('/');
-  }
-
-  async openChat() {
-    await expect(this.locators.chatButton.first()).toBeVisible();
-    await this.locators.chatButton.first().click();
+    await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+    await this.page.waitForSelector('.targeted-loader-fullhide', { state: 'hidden', timeout: 10000 }).catch(() => {});
     await expect(this.locators.chatWindow).toBeVisible();
   }
 
+  async isChatWindowDisplayed() {
+    await expect(this.locators.chatWindow).toBeVisible();
+  }
+
+  async clearMessage() {
+    await this.locators.inputBox.waitFor({ state: 'visible', timeout: 5000 });
+    await this.locators.inputBox.clear();
+  }
+
+  async enterMessage(message: string) {
+    await this.locators.inputBox.waitFor({ state: 'visible', timeout: 5000 });
+    await this.locators.inputBox.fill(message);
+  }
+
   async sendMessage(message: string) {
+    await this.locators.inputBox.waitFor({ state: 'visible', timeout: 5000 });
     await this.locators.inputBox.fill(message);
     await this.locators.inputBox.press('Enter');
   }
 
+  async sendMessageWithButton(message: string) {
+    await this.locators.inputBox.waitFor({ state: 'visible', timeout: 5000 });
+    await this.locators.inputBox.fill(message);
+    await this.locators.sendButton.waitFor({ state: 'visible', timeout: 5000 });
+    await expect(this.locators.sendButton).toBeEnabled();
+    await this.locators.sendButton.click();
+  }
+
   async waitForAIResponse() {
-    // Optional loader sync
     await this.locators.loader.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
     await this.locators.loader.waitFor({ state: 'hidden', timeout: 25000 }).catch(() => {});
-
-    // Ensure AI message rendered
     await this.locators.aiMessage.last().waitFor({ timeout: 25000 });
   }
 
-  async switchLanguage(lang: 'AR' | 'EN') {
-    if (lang === 'AR') {
-      await this.switchToArabic();
-    } else {
-      await this.switchToEnglish();
-    }
-  }
-
-  async switchToArabic() {
-    await this.locators.arabicToggle.first().click();
-  }
-
-  async switchToEnglish() {
-    await this.locators.englishToggle.first().click();
+  async switchLanguage(lang: string) {
+    const langMap: { [key: string]: string } = {
+      'KA': 'ka-GE',
+      'AR': 'ar-AE',
+      'EN': 'en-US',
+      'FR': 'fr-FR',
+      'ES': 'es-AR',
+      'DE': 'de-DE',
+      'IT': 'it-IT',
+      'PT': 'pt-PT',
+      'SV': 'sv-SE',
+      'NL': 'nl-NL',
+      'DA': 'da-DK',
+      'FI': 'fi-FI',
+      'EL': 'el-GR',
+      'HU': 'hu-HU',
+      'NB': 'nb-NO',
+      'RO': 'ro-RO',
+      'TR': 'tr-TR',
+      'CMN': 'cmn-Hant-TW',
+      'JA': 'ja-JP',
+      'RU': 'ru-RU',
+      'KO': 'ko-KR',
+      'PL': 'pl-PL',
+      'CA': 'ca-ES',
+      'UR': 'ur-IN',
+      'HI': 'hi-IN',
+      'BN': 'bn-BD',
+      'ID': 'id-ID',
+      'TH': 'th-TH',
+      'VI': 'vi-VN',
+      'HE': 'he-IL',
+      'UK': 'uk-UA'
+    };
+    
+    const selectValue = langMap[lang.toUpperCase()] || lang;
+    await this.locators.languageSelect.selectOption(selectValue);
+    await this.page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+    await this.page.waitForTimeout(500);
   }
 }

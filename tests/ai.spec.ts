@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { ChatbotPage } from '../src/pages/ChatBotPage';
+import { ChatbotPage } from '../src/pages/ChatbotPage';
 import { validateAIResponse } from '../src/helpers/aiValidator';
 import aiData from '../test-data/ai-data.json';
 
@@ -10,7 +10,7 @@ test.describe('AI Functional Validation (Pass/Fail)', () => {
   test.beforeEach(async ({ page }) => {
     chat = new ChatbotPage(page);
     await chat.openApp();
-    await chat.openChat();
+    await chat.isChatWindowDisplayed();
   });
 
   test('AI responds correctly for public service query', async () => {

@@ -19,6 +19,13 @@
       "message": "Hello",
       "direction": "ltr",
       "placeholderKeyword": "type"
+    },
+    {
+      "lang": "FR",
+      "toggle": "FR",
+      "message": "Bonjour",
+      "direction": "ltr",
+      "placeholderKeyword": "tapez"
     }
   ],
 

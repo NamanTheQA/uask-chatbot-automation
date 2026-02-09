@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { ChatbotPage } from '../src/pages/ChatBotPage';
+import { ChatbotPage } from '../src/pages/ChatbotPage';
 import securityData from '../test-data/security-data.json';
 
 test.describe('U-Ask Security & Injection Handling', () => {
@@ -9,7 +9,7 @@ test.describe('U-Ask Security & Injection Handling', () => {
   test.beforeEach(async ({ page }) => {
     chat = new ChatbotPage(page);
     await chat.openApp();
-    await chat.openChat();
+    await chat.isChatWindowDisplayed();
   });
 
   test('XSS input is sanitized and does not execute script', async ({ page }) => {
@@ -41,6 +41,18 @@ test.describe('U-Ask Security & Injection Handling', () => {
 
     expect(aiText.toLowerCase()).not.toContain(securityData.forbiddenKeyword1);
     expect(aiText.toLowerCase()).not.toContain(securityData.forbiddenKeyword2);
+
+  });
+
+  test('Invalid/unrecognized input is handled gracefully', async () => {
+
+    await chat.sendMessage(securityData.invalidInput);
+
+    await chat.waitForAIResponse();
+
+    const aiText = await chat.getLastAIResponse();
+
+    expect(aiText.toLowerCase()).toContain('sorry');
 
   });
 

@@ -1,5 +1,5 @@
 import { test } from '@playwright/test';
-import { ChatbotPage } from '../src/pages/ChatBotPage';
+import { ChatbotPage } from '../src/pages/ChatbotPage';
 import { validateAIResponseScore } from '../src/helpers/aiValidator';
 import fs from 'fs';
 import prompts from '../test-data/ai-prompts.json';
@@ -12,7 +12,7 @@ test.describe('AI Batch Quality Scoring', () => {
   test.beforeEach(async ({ page }) => {
     chat = new ChatbotPage(page);
     await chat.openApp();
-    await chat.openChat();
+    await chat.isChatWindowDisplayed();
   });
 
   test('Run AI scoring for all prompts', async () => {

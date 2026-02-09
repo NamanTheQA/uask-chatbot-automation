@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { ChatbotPage } from '../src/pages/ChatBotPage';
+import { ChatbotPage } from '../src/pages/ChatbotPage';
 import uiData from '../test-data/ui-data.json';
 
 test.describe('Multilingual UI Validation (Data Driven)', () => {
@@ -11,9 +11,9 @@ test.describe('Multilingual UI Validation (Data Driven)', () => {
       const chat = new ChatbotPage(page);
 
       await chat.openApp();
-      await chat.openChat();
+      await chat.isChatWindowDisplayed();
       
-      await chat.switchLanguage(langData.lang as 'AR' | 'EN');
+      await chat.switchLanguage(langData.lang);
 
       await chat.sendMessage(langData.message);
 

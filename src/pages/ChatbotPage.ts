@@ -14,6 +14,10 @@ export class ChatbotPage {
     return this.locators.chatWindow;
   }
 
+  public get sendButton() {
+    return this.locators.sendButton;
+  }
+
   constructor(page: Page) {
     this.locators = new ChatLocators(page);
     this.actions = new ChatActions(page, this.locators);
@@ -25,8 +29,16 @@ export class ChatbotPage {
     return this.actions.openApp();
   }
 
-  async openChat() {
-    return this.actions.openChat();
+  async isChatWindowDisplayed() {
+    return this.actions.isChatWindowDisplayed();
+  }
+
+  async clearMessage() {
+    return this.actions.clearMessage();
+  }
+
+  async enterMessage(message: string) {
+    return this.actions.enterMessage(message);
   }
 
   async sendMessage(message: string) {
@@ -37,16 +49,8 @@ export class ChatbotPage {
     return this.actions.waitForAIResponse();
   }
 
-  async switchLanguage(lang: 'AR' | 'EN') {
+  async switchLanguage(lang: string) {
     return this.actions.switchLanguage(lang);
-  }
-
-  async switchToArabic() {
-    return this.actions.switchToArabic();
-  }
-
-  async switchToEnglish() {
-    return this.actions.switchToEnglish();
   }
 
   // Delegate methods from ChatDataExtractor
