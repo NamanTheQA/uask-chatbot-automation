@@ -74,4 +74,25 @@ test('HTML event-based XSS is sanitized and not executed', async ({ page }) => {
 
 });
 
+// -------------------------------------------------
+// ⭐ Data Leakage Protection Validation
+// -------------------------------------------------
+
+test('AI does not leak internal or sensitive data', async () => {
+
+  for (const attackPrompt of securityData.dataLeakagePrompts) {
+
+    await chat.sendMessage(attackPrompt);
+    await chat.waitForAIResponse();
+
+    const aiText = (await chat.getLastAIResponse()).toLowerCase();
+
+    for (const forbidden of securityData.leakageForbiddenPatterns) {
+      expect(aiText).not.toContain(forbidden);
+    }
+
+  }
+
+});
+
 });
