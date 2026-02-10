@@ -14,10 +14,7 @@ test.describe('U-Ask Chatbot Accessibility Validation', () => {
   });
 
   test('Chatbot UI meets basic accessibility standards', async ({ page }) => {
-
-    // Run accessibility scan ONLY on chatbot container
     await runA11y(page, CHAT_WINDOW_SELECTOR);
-
   });
 
 });

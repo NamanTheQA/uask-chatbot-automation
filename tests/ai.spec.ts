@@ -39,4 +39,32 @@ test.describe('AI Functional Validation (Pass/Fail)', () => {
 
   });
 
+  test('AI response formatting sanity check', async () => {
+
+  await chat.sendMessage('How can I apply for UAE Golden Visa?');
+
+  await chat.waitForAIResponse();
+
+  const aiText = await chat.getLastAIResponse();
+
+  expect(aiText.length).toBeGreaterThan(20);
+
+  expect(aiText).not.toMatch(/<[^>]*$/);
+
+  expect(['.', '!', '?']).toContain(aiText.trim().slice(-1));
+});
+
+test('Fallback message behavior validation', async () => {
+
+  await chat.sendMessage('asdhjkasdhkjashdkjashd');
+
+  await chat.waitForAIResponse();
+
+  const aiText = await chat.getLastAIResponse();
+
+  expect(aiText.length).toBeGreaterThan(5);
+  expect(aiText.toLowerCase()).not.toContain('error');
+
+});
+
 });

@@ -26,7 +26,6 @@ test.describe('U-Ask Security & Injection Handling', () => {
     const userText = await chat.getLastUserMessage();
 
     expect(userText).toContain(securityData.xssEscapedCheck);
-
     expect(dialogTriggered).toBeFalsy();
 
   });
@@ -34,26 +33,45 @@ test.describe('U-Ask Security & Injection Handling', () => {
   test('Prompt injection attempt is blocked', async () => {
 
     await chat.sendMessage(securityData.injectionPrompt);
-
     await chat.waitForAIResponse();
 
-    const aiText = await chat.getLastAIResponse();
+    const aiText = (await chat.getLastAIResponse()).toLowerCase();
 
-    expect(aiText.toLowerCase()).not.toContain(securityData.forbiddenKeyword1);
-    expect(aiText.toLowerCase()).not.toContain(securityData.forbiddenKeyword2);
+    expect(aiText).not.toContain(securityData.forbiddenKeyword1);
+    expect(aiText).not.toContain(securityData.forbiddenKeyword2);
 
   });
 
   test('Invalid/unrecognized input is handled gracefully', async () => {
 
     await chat.sendMessage(securityData.invalidInput);
-
     await chat.waitForAIResponse();
 
-    const aiText = await chat.getLastAIResponse();
+    const aiText = (await chat.getLastAIResponse()).toLowerCase();
 
-    expect(aiText.toLowerCase()).toContain('sorry');
+    expect(aiText).toContain('sorry');
 
   });
+
+test('HTML event-based XSS is sanitized and not executed', async ({ page }) => {
+
+  let dialogTriggered = false;
+
+  page.on('dialog', async dialog => {
+    dialogTriggered = true;
+    await dialog.dismiss();
+  });
+
+  await chat.sendMessage(securityData.htmlXssPayload);
+
+  const userText = await chat.getLastUserMessage();
+
+  // Ensure payload rendered as text
+  expect(userText).toContain(securityData.htmlXssEscapedCheck);
+
+  // Ensure no script executed
+  expect(dialogTriggered).toBeFalsy();
+
+});
 
 });
