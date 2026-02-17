@@ -13,4 +13,14 @@ export class BasePage {
     await loader.waitFor({ state: 'hidden', timeout: 25000 }).catch(() => {});
   }
 
+  async handleDisclaimerIfPresent() {
+  const acceptButton = this.page.locator('button:has-text("Accept and continue")');
+
+  if (await acceptButton.isVisible().catch(() => false)) {
+    await acceptButton.click();
+    await this.page.waitForTimeout(1000); // allow UI to stabilize
+  }
+}
+
+
 }

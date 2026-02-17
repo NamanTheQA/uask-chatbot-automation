@@ -8,6 +8,8 @@ import fs from 'fs';
 import prompts from '../test-data/ai-prompts.json';
 import scoreConfig from '../test-data/score-config.json';
 
+test.describe.configure({ mode: 'serial' });
+
 test.describe('AI Batch Quality Scoring', () => {
 
   let chat: ChatbotPage;
@@ -38,17 +40,14 @@ test.describe('AI Batch Quality Scoring', () => {
         responseTime
       );
 
-      const entry = {
+      results.push({
         id: prompt.id,
         question: prompt.text,
         responseTimeMs: scoreResult.responseTimeMs,
         score: scoreResult.score,
         issues: scoreResult.reasons,
         timestamp: new Date().toISOString()
-      };
-
-      results.push(entry);
-      console.log('AI METRIC:', entry);
+      });
     }
 
     fs.mkdirSync(scoreConfig.reportsDir, { recursive: true });
@@ -57,9 +56,6 @@ test.describe('AI Batch Quality Scoring', () => {
       scoreConfig.reportPath,
       JSON.stringify(results, null, 2)
     );
-
-    console.log('AI Score Report Generated:', scoreConfig.reportPath);
-
   });
 
   test('AI response consistency scoring (multi-run stability)', async () => {
@@ -68,12 +64,10 @@ test.describe('AI Batch Quality Scoring', () => {
 
     for (const prompt of prompts) {
 
-      // First response
       await chat.sendMessage(prompt.text);
       await chat.waitForAIResponse();
       const response1 = await chat.getLastAIResponse();
 
-      // Second response
       await chat.sendMessage(prompt.text);
       await chat.waitForAIResponse();
       const response2 = await chat.getLastAIResponse();
@@ -84,16 +78,13 @@ test.describe('AI Batch Quality Scoring', () => {
         prompt.keywords
       );
 
-      const entry = {
+      consistencyResults.push({
         id: prompt.id,
         question: prompt.text,
         consistencyScore: consistency.consistencyScore,
         issues: consistency.reasons,
         timestamp: new Date().toISOString()
-      };
-
-      consistencyResults.push(entry);
-      console.log('CONSISTENCY METRIC:', entry);
+      });
     }
 
     fs.mkdirSync(scoreConfig.reportsDir, { recursive: true });
@@ -102,12 +93,6 @@ test.describe('AI Batch Quality Scoring', () => {
       `${scoreConfig.reportsDir}/ai-consistency-report.json`,
       JSON.stringify(consistencyResults, null, 2)
     );
-
-    console.log(
-      'AI Consistency Report Generated:',
-      `${scoreConfig.reportsDir}/ai-consistency-report.json`
-    );
-
   });
 
 });

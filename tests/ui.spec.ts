@@ -1,14 +1,18 @@
 import { test, expect } from '@playwright/test';
+import { BasePage } from '../src/pages/BasePage';
 import { ChatbotPage } from '../src/pages/ChatbotPage';
 import uiData from '../test-data/ui-data.json';
 
 test.describe('U-Ask Chatbot UI Behavior (Data Driven)', () => {
 
   let chat: ChatbotPage;
+  let base: BasePage;
 
   test.beforeEach(async ({ page }) => {
     chat = new ChatbotPage(page);
+    base = new BasePage(page);
     await chat.openApp();
+    await base.handleDisclaimerIfPresent();
     await chat.isChatWindowDisplayed();
   });
 
