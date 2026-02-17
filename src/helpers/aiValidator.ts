@@ -1,3 +1,30 @@
+import { SEMANTIC_GROUPS } from './semanticDictionary';
+
+export function calculateSemanticScore(text: string) {
+
+  const cleaned = text.toLowerCase();
+
+  let matchCount = 0;
+  const totalGroups = Object.keys(SEMANTIC_GROUPS).length;
+
+  for (const groupWords of Object.values(SEMANTIC_GROUPS)) {
+
+    const matched = groupWords.some(word =>
+      cleaned.includes(word.toLowerCase())
+    );
+
+    if (matched) matchCount++;
+  }
+
+  const score = (matchCount / totalGroups) * 100;
+
+  return {
+    semanticScore: score,
+    matchedGroups: matchCount,
+    totalGroups
+  };
+}
+
 // ------------------ FUNCTIONAL VALIDATION (CI GATE) ------------------
 
 export function validateAIResponse(text: string) {
@@ -143,6 +170,16 @@ export function validateAIResponseScore(
     responseTimeMs,
     hallucinationRisk: hallucination.hallucinationRisk
   };
+
+  // ⭐ Semantic scoring bonus
+const semantic = calculateSemanticScore(cleaned);
+
+if (semantic.semanticScore > 60) {
+  score += 10;
+} else if (semantic.semanticScore < 30) {
+  reasons.push('Low semantic relevance');
+}
+
 }
 
 export function calculateConsistencyScore(
