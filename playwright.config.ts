@@ -1,4 +1,4 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 import { ENV, baseURLs } from './src/config/env';
 
 const timestamp = new Date()
@@ -37,17 +37,42 @@ export default defineConfig({
 
   projects: [
     {
-      name: 'chrome',
+      name: 'chromium',
       use: {
-        browserName: 'chromium'
+        browserName: 'chromium',
+        viewport: { width: 1920, height: 1080 }
       }
     },
     {
-      name: 'mobile',
+      name: 'firefox',
       use: {
-        browserName: 'chromium',
-        viewport: { width: 390, height: 844 }, // Pixel-like
-        isMobile: true
+        browserName: 'firefox',
+        viewport: { width: 1920, height: 1080 }
+      }
+    },
+    {
+      name: 'webkit',
+      use: {
+        browserName: 'webkit',
+        viewport: { width: 1920, height: 1080 }
+      }
+    },
+    {
+      name: 'Mobile Chrome',
+      use: {
+        ...devices['Pixel 7'],
+      }
+    },
+    {
+      name: 'Mobile Safari',
+      use: {
+        ...devices['iPhone 14'],
+      }
+    },
+    {
+      name: 'iPad',
+      use: {
+        ...devices['iPad Pro'],
       }
     }
   ],
