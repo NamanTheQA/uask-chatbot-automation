@@ -36,12 +36,13 @@ export class ChatLocators {
 
     this.loader = this.page.locator('.typing, .loader, .dots');
 
+    // Language toggle button in top-right (based on aria-label)
     this.arabicToggle = this.page.locator(
-      'button:has-text("AR"), a:has-text("AR")'
+      'a[aria-label="Arabic"], button[aria-label="Arabic"]'
     );
 
     this.englishToggle = this.page.locator(
-      'button:has-text("EN"), a:has-text("EN")'
+      'a[aria-label="English"], button[aria-label="English"]'
     );
 
     this.languageSelect = this.page.locator('select#Language_conversation');
