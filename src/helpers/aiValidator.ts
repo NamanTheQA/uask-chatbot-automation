@@ -112,12 +112,19 @@ type ValidationResult = {
   reasons: string[];
   responseTimeMs: number;
   hallucinationRisk?: number;
+  contextPrecision?: number;
+  contextRecall?: number;
+  answerCorrectness?: number;
+  faithfulness?: number;
 };
 
 export function validateAIResponseScore(
   text: string,
   expectedKeywords: string[],
-  responseTimeMs: number
+  responseTimeMs: number,
+  userQuery?: string,
+  groundTruth?: string,
+  expectedSources?: string[]
 ): ValidationResult {
 
   let score = 0;
@@ -164,11 +171,52 @@ export function validateAIResponseScore(
     reasons.push(...hallucination.reasons);
   }
 
+  // Calculate Context Precision (if query provided)
+  let precisionScore = 0;
+  if (userQuery) {
+    const precision = calculateContextPrecision(cleaned, userQuery, expectedKeywords);
+    precisionScore = precision.precisionScore;
+    if (precisionScore < 70) {
+      reasons.push(...precision.reasons);
+    }
+  }
+
+  // Calculate Context Recall
+  const recall = calculateContextRecall(cleaned, expectedKeywords);
+  const recallScore = recall.recallScore;
+  if (recallScore < 70) {
+    reasons.push(...recall.reasons);
+  }
+
+  // Calculate Answer Correctness (if ground truth provided)
+  let correctnessScore = 0;
+  if (groundTruth) {
+    const correctness = calculateAnswerCorrectness(cleaned, groundTruth, expectedKeywords);
+    correctnessScore = correctness.correctnessScore;
+    if (correctnessScore < 70) {
+      reasons.push(...correctness.reasons);
+    }
+  }
+
+  // Calculate Faithfulness (if expected sources provided)
+  let faithfulnessScore = 0;
+  if (expectedSources && expectedSources.length > 0) {
+    const faithfulness = calculateFaithfulness(cleaned, expectedSources);
+    faithfulnessScore = faithfulness.faithfulnessScore;
+    if (faithfulnessScore < 70) {
+      reasons.push(...faithfulness.reasons);
+    }
+  }
+
   return {
     score: Math.max(score, 0),
     reasons,
     responseTimeMs,
-    hallucinationRisk: hallucination.hallucinationRisk
+    hallucinationRisk: hallucination.hallucinationRisk,
+    contextPrecision: precisionScore,
+    contextRecall: recallScore,
+    answerCorrectness: correctnessScore || undefined,
+    faithfulness: faithfulnessScore || undefined
   };
 
   // ⭐ Semantic scoring bonus
@@ -181,6 +229,277 @@ if (semantic.semanticScore > 60) {
 }
 
 }
+
+// ------------------ CONTEXT PRECISION ------------------
+
+export function calculateContextPrecision(
+  aiResponse: string,
+  userQuery: string,
+  expectedKeywords: string[]
+): { precisionScore: number; reasons: string[] } {
+
+  let score = 100;
+  const reasons: string[] = [];
+
+  const response = aiResponse.toLowerCase();
+  const query = userQuery.toLowerCase();
+
+  // Extract query intent keywords (what user asked about)
+  const queryWords = query.split(/\s+/).filter(w => w.length > 3);
+
+  // Check if response addresses the query keywords
+  const queryRelevance = queryWords.filter(word => 
+    response.includes(word)
+  ).length;
+
+  const relevanceRatio = queryWords.length > 0 
+    ? (queryRelevance / queryWords.length) * 100 
+    : 0;
+
+  if (relevanceRatio < 30) {
+    score -= 40;
+    reasons.push('Low query relevance: Response does not address query keywords');
+  } else if (relevanceRatio < 60) {
+    score -= 20;
+    reasons.push('Moderate query relevance');
+  }
+
+  // Check if expected topic keywords are present
+  const topicMatch = expectedKeywords.filter(k => 
+    response.includes(k.toLowerCase())
+  ).length;
+
+  const topicRatio = expectedKeywords.length > 0
+    ? (topicMatch / expectedKeywords.length) * 100
+    : 0;
+
+  if (topicRatio < 40) {
+    score -= 30;
+    reasons.push('Missing expected topic keywords');
+  }
+
+  // Check for off-topic content (irrelevant noise)
+  const offTopicPatterns = [
+    'subscribe', 'follow us', 'like our page', 
+    'download our app', 'special offer', 'limited time'
+  ];
+
+  const hasOffTopic = offTopicPatterns.some(p => response.includes(p));
+  if (hasOffTopic) {
+    score -= 20;
+    reasons.push('Contains off-topic promotional content');
+  }
+
+  // Precision: Does it stay focused on the query?
+  const responseLength = response.split(/\s+/).length;
+  if (responseLength > 300) {
+    score -= 10;
+    reasons.push('Response may be too verbose (low precision)');
+  }
+
+  return {
+    precisionScore: Math.max(score, 0),
+    reasons
+  };
+}
+
+
+// ------------------ ANSWER CORRECTNESS (GROUND TRUTH) ------------------
+
+export function calculateAnswerCorrectness(
+  aiResponse: string,
+  groundTruth: string,
+  expectedKeywords: string[]
+): { correctnessScore: number; reasons: string[] } {
+
+  let score = 100;
+  const reasons: string[] = [];
+
+  const response = aiResponse.toLowerCase();
+  const truth = groundTruth.toLowerCase();
+
+  // Check for factual overlap with ground truth
+  const truthWords = truth.split(/\s+/).filter(w => w.length > 4);
+  const matchedWords = truthWords.filter(word => response.includes(word));
+
+  const factualOverlap = truthWords.length > 0
+    ? (matchedWords.length / truthWords.length) * 100
+    : 0;
+
+  if (factualOverlap < 30) {
+    score -= 50;
+    reasons.push('Low factual overlap with ground truth');
+  } else if (factualOverlap < 60) {
+    score -= 25;
+    reasons.push('Moderate factual overlap with ground truth');
+  }
+
+  // Check for keyword alignment
+  const keywordMatch = expectedKeywords.filter(k =>
+    response.includes(k.toLowerCase())
+  ).length;
+
+  const keywordRatio = expectedKeywords.length > 0
+    ? (keywordMatch / expectedKeywords.length) * 100
+    : 0;
+
+  if (keywordRatio < 50) {
+    score -= 30;
+    reasons.push('Missing critical expected keywords');
+  }
+
+  // Check for contradictions with ground truth
+  const contradictionPatterns = [
+    { truth: 'free', contradiction: 'fee' },
+    { truth: 'required', contradiction: 'not required' },
+    { truth: 'online', contradiction: 'in person' }
+  ];
+
+  for (const pattern of contradictionPatterns) {
+    if (truth.includes(pattern.truth) && response.includes(pattern.contradiction)) {
+      score -= 20;
+      reasons.push(`Contradiction detected: Response mentions "${pattern.contradiction}" but truth says "${pattern.truth}"`);
+    }
+  }
+
+  return {
+    correctnessScore: Math.max(score, 0),
+    reasons
+  };
+}
+
+
+// ------------------ FAITHFULNESS TO SOURCE ------------------
+
+export function calculateFaithfulness(
+  aiResponse: string,
+  expectedSources: string[]
+): { faithfulnessScore: number; reasons: string[] } {
+
+  let score = 100;
+  const reasons: string[] = [];
+
+  const response = aiResponse.toLowerCase();
+
+  // Check if official sources are cited
+  const officialDomains = ['gov.ae', 'u.ae', 'ica.gov.ae', 'federal authority'];
+  const citedSources = officialDomains.filter(source => response.includes(source));
+
+  if (citedSources.length === 0) {
+    score -= 40;
+    reasons.push('No official source citations found');
+  } else {
+    reasons.push(`Cited sources: ${citedSources.join(', ')}`);
+  }
+
+  // Check for expected source references
+  if (expectedSources.length > 0) {
+    const matchedSources = expectedSources.filter(s =>
+      response.includes(s.toLowerCase())
+    );
+
+    const sourceRatio = (matchedSources.length / expectedSources.length) * 100;
+
+    if (sourceRatio < 50) {
+      score -= 30;
+      reasons.push('Missing expected source references');
+    }
+  }
+
+  // Check for unsourced claims (red flags)
+  const unsourcedClaims = [
+    'definitely', 'absolutely guaranteed', 'always works',
+    'never fails', '100% success', 'instant approval'
+  ];
+
+  const hasUnsourcedClaim = unsourcedClaims.some(claim =>
+    response.includes(claim)
+  );
+
+  if (hasUnsourcedClaim) {
+    score -= 25;
+    reasons.push('Contains unsourced absolute claims');
+  }
+
+  // Check for proper attribution phrases
+  const attributionPhrases = [
+    'according to', 'as per', 'based on', 'published by',
+    'states that', 'mentioned on', 'official website'
+  ];
+
+  const hasAttribution = attributionPhrases.some(phrase =>
+    response.includes(phrase)
+  );
+
+  if (hasAttribution) {
+    score += 10; // Bonus for proper attribution
+    reasons.push('Contains proper source attribution');
+  } else {
+    score -= 15;
+    reasons.push('Lacks source attribution phrases');
+  }
+
+  return {
+    faithfulnessScore: Math.max(Math.min(score, 100), 0),
+    reasons
+  };
+}
+
+
+// ------------------ CONTEXT PRECISION ------------------
+
+export function calculateContextRecall(
+  aiResponse: string,
+  expectedKeywords: string[]
+): { recallScore: number; reasons: string[] } {
+
+  let score = 100;
+  const reasons: string[] = [];
+
+  const response = aiResponse.toLowerCase();
+
+  // Check how many expected keywords are covered
+  const coveredKeywords = expectedKeywords.filter(k => 
+    response.includes(k.toLowerCase())
+  );
+
+  const recallRatio = expectedKeywords.length > 0
+    ? (coveredKeywords.length / expectedKeywords.length) * 100
+    : 0;
+
+  if (recallRatio < 40) {
+    score -= 50;
+    reasons.push(`Low recall: Only ${coveredKeywords.length}/${expectedKeywords.length} expected keywords covered`);
+  } else if (recallRatio < 70) {
+    score -= 25;
+    reasons.push(`Moderate recall: ${coveredKeywords.length}/${expectedKeywords.length} expected keywords covered`);
+  } else {
+    reasons.push(`Good recall: ${coveredKeywords.length}/${expectedKeywords.length} keywords covered`);
+  }
+
+  // Check for comprehensive coverage using semantic groups
+  const semantic = calculateSemanticScore(response);
+  
+  if (semantic.semanticScore < 40) {
+    score -= 20;
+    reasons.push('Low semantic coverage across topic groups');
+  }
+
+  // Check if official sources are mentioned (important for recall)
+  const officialSources = ['gov.ae', 'u.ae', 'ica', 'federal authority'];
+  const hasOfficialSource = officialSources.some(s => response.includes(s));
+
+  if (!hasOfficialSource) {
+    score -= 15;
+    reasons.push('Missing official source reference');
+  }
+
+  return {
+    recallScore: Math.max(score, 0),
+    reasons
+  };
+}
+
 
 export function calculateConsistencyScore(
   response1: string,
