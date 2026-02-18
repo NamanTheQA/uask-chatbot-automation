@@ -1,12 +1,12 @@
 import { test } from '@playwright/test';
-import { ChatbotPage } from '../src/pages/ChatbotPage';
+import { ChatbotPage } from '../../src/pages/ChatbotPage';
 import {
   validateAIResponseScore,
   calculateConsistencyScore
-} from '../src/helpers/aiValidator';
+} from '../../src/helpers/aiValidator';
 import fs from 'fs';
-import prompts from '../test-data/ai-prompts.json';
-import scoreConfig from '../test-data/score-config.json';
+import prompts from '../../src/test-data/ai-prompts.json';
+import scoreConfig from '../../src/test-data/score-config.json';
 
 test.describe.configure({ mode: 'serial' });
 

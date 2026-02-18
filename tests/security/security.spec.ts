@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { ChatbotPage } from '../src/pages/ChatbotPage';
-import securityData from '../test-data/security-data.json';
+import { ChatbotPage } from '../../src/pages/ChatbotPage';
+import securityData from '../../src/test-data/security-data.json';
 
 test.describe('U-Ask Security & Injection Handling', () => {
 

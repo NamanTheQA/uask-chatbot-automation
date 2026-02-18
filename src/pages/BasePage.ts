@@ -14,11 +14,15 @@ export class BasePage {
   }
 
   async handleDisclaimerIfPresent() {
-  const acceptButton = this.page.locator('button:has-text("Accept and continue")');
+
+  const modal = this.page.getByRole('dialog', { name: /disclaimer/i });
+  const acceptButton = modal.getByRole('button', { name: /accept/i });
 
   if (await acceptButton.isVisible().catch(() => false)) {
-    await acceptButton.click();
-    await this.page.waitForTimeout(1000); // allow UI to stabilize
+
+    await modal.evaluate(el => el.scrollTop = el.scrollHeight);
+
+    await acceptButton.click({ force: true });
   }
 }
 

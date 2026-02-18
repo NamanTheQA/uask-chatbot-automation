@@ -11,6 +11,8 @@
     "test:headed": "cross-env HEADED=true npx playwright test",
     "test:r9int": "cross-env ENV=r9int npx playwright test",
     "test:prod": "cross-env ENV=prod npx playwright test",
+    "test:prod-headed": "cross-env ENV=prod HEADED=true npx playwright test",
+    "test:r9int-headed": "ENV=r9int HEADED=true npx playwright test",
     "test:ui": "npx playwright test tests/ui.spec.ts",
     "test:ai": "npx playwright test tests/ai.spec.ts",
     "test:score": "npx playwright test tests/ai.score.spec.ts",

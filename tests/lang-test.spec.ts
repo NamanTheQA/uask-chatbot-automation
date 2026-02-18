@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { ChatbotPage } from '../src/pages/ChatbotPage';
-import uiData from '../test-data/ui-data.json';
+import uiData from '../src/test-data/ui-data.json';
 
 test.describe('Multilingual UI Validation (Data Driven)', () => {
 

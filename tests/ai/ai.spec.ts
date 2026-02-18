@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { ChatbotPage } from '../src/pages/ChatbotPage';
-import { validateAIResponse } from '../src/helpers/aiValidator';
-import aiData from '../test-data/ai-data.json';
+import { ChatbotPage } from '../../src/pages/ChatbotPage';
+import { validateAIResponse } from '../../src/helpers/aiValidator';
+import aiData from '../../src/test-data/ai-data.json';
 
 test.describe('AI Functional Validation (Pass/Fail)', () => {
 

@@ -1,50 +1,52 @@
-  import { defineConfig, devices } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
+import { ENV, baseURLs } from './src/config/env';
 
-  const ENV = process.env.ENV || 'r9int';
+export default defineConfig({
 
-  const baseURLs: Record<string, string> = {
-    r9int: 'https://beta-ask.u.ae',
-    prod: 'https://ask.u.ae'
-  };
+  testDir: './tests',
 
-  export default defineConfig({
+  fullyParallel: ENV === 'prod' ? false : true,
 
-    testDir: './tests',
-    fullyParallel: true,
-    timeout: 60000,
+  timeout: 60000,
 
-    expect: {
-      timeout: 10000
+  retries: ENV === 'prod' ? 0 : 1,
+  workers: ENV === 'prod' ? 1 : 4,
+
+  use: {
+    baseURL: baseURLs[ENV],
+    headless: process.env.HEADED ? false : true,
+
+    viewport: { width: 1920, height: 1080 },
+
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+    trace: 'retain-on-failure',
+
+    actionTimeout: 15000,
+    navigationTimeout: 30000
+  },
+
+  projects: [
+    {
+      name: 'chrome',
+      use: {
+        browserName: 'chromium'
+      }
     },
+    {
+      name: 'mobile',
+      use: {
+        browserName: 'chromium',
+        viewport: { width: 390, height: 844 }, // Pixel-like
+        isMobile: true
+      }
+    }
+  ],
 
-    retries: process.env.CI ? 2 : 0,
-    workers: process.env.CI ? 2 : 1,
+  reporter: [
+    ['list'],
+    ['html'],
+    ['allure-playwright']
+  ]
 
-    use: {
-      baseURL: baseURLs[ENV],
-      headless: process.env.HEADED ? false : true,
-      screenshot: 'only-on-failure',
-      video: 'retain-on-failure',
-      trace: 'retain-on-failure',
-      actionTimeout: 15000,
-      navigationTimeout: 30000
-    },
-
-    projects: [
-      {
-        name: 'chrome',
-        use: { ...devices['Desktop Chrome'] }
-      },
-      // {
-      //   name: 'mobile',
-      //   use: { ...devices['Pixel 7'] }
-      // }
-    ],
-
-    reporter: [
-      ['list'],
-      ['html'],
-      ['allure-playwright']
-    ]
-
-  });
+});

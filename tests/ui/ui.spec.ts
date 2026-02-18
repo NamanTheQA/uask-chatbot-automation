@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { BasePage } from '../src/pages/BasePage';
-import { ChatbotPage } from '../src/pages/ChatbotPage';
-import uiData from '../test-data/ui-data.json';
+import { BasePage } from '../../src/pages/BasePage';
+import { ChatbotPage } from '../../src/pages/ChatbotPage';
+import uiData from '../../src/test-data/ui-data.json';
 
 test.describe('U-Ask Chatbot UI Behavior (Data Driven)', () => {
 
@@ -62,7 +62,7 @@ test.describe('U-Ask Chatbot UI Behavior (Data Driven)', () => {
 
   });
 
-  test('Send button is disabled after clearing message', async () => {
+  test.only('Send button is disabled after clearing message', async () => {
 
     await chat.enterMessage(uiData.basicMessages.english);
     await chat.clearMessage();

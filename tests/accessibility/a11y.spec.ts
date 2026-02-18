@@ -1,7 +1,7 @@
 import { test } from '@playwright/test';
-import { ChatbotPage } from '../src/pages/ChatbotPage';
-import { CHAT_WINDOW_SELECTOR } from '../src/pages/ChatLocators';
-import { runA11y } from '../src/helpers/a11y';
+import { ChatbotPage } from '../../src/pages/ChatbotPage';
+import { CHAT_WINDOW_SELECTOR } from '../../src/pages/ChatLocators';
+import { runA11y } from '../../src/helpers/a11y';
 
 test.describe('U-Ask Chatbot Accessibility Validation', () => {
 
