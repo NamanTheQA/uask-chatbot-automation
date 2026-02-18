@@ -62,7 +62,7 @@ test.describe('U-Ask Chatbot UI Behavior (Data Driven)', () => {
 
   });
 
-  test.only('Send button is disabled after clearing message', async () => {
+  test('Send button is disabled after clearing message', async () => {
 
     await chat.enterMessage(uiData.basicMessages.english);
     await chat.clearMessage();
