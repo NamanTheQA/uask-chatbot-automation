@@ -6,7 +6,7 @@ test.describe('Multilingual UI Validation (Data Driven)', () => {
 
   for (const langData of uiData.languages) {
 
-    test(`Validate ${langData.lang} layout and localization`, async ({ page }) => {
+    test(`Validate ${langData.lang} layout and localization using toggle`, async ({ page }) => {
 
       const chat = new ChatbotPage(page);
 
@@ -14,12 +14,21 @@ test.describe('Multilingual UI Validation (Data Driven)', () => {
       await chat.openApp();
       await chat.isChatWindowDisplayed();
 
-      // Switch language
-      await chat.switchLanguage(langData.lang);
+      // Toggle language using top-right button (triggers page refresh)
+      await chat.toggleLanguageButton(langData.lang);
+
+      // Wait for page to stabilize after refresh
+      await page.waitForTimeout(1000);
 
       // Validate page-level direction (html tag)
       const htmlDir = await page.locator('html').getAttribute('dir');
       expect(htmlDir).toBe(langData.direction);
+
+      // Validate lang attribute on html or div elements
+      if (langData.lang === 'AR') {
+        const langAttr = await page.locator('[lang="ar"]').first().getAttribute('lang');
+        expect(langAttr).toBe('ar');
+      }
 
       // Validate input field direction
       const inputLocator = page.locator('textarea, input[type="text"]').first();
@@ -54,6 +63,12 @@ test.describe('Multilingual UI Validation (Data Driven)', () => {
 
         // Ensure Arabic Unicode characters exist
         expect(userText).toMatch(/[\u0600-\u06FF]/);
+
+        // Validate Arabic text in notification circle (العربية)
+        const arabicText = await page.locator('.notification-circle').first().textContent();
+        if (arabicText) {
+          expect(arabicText).toMatch(/[\u0600-\u06FF]/);
+        }
       }
 
     });
