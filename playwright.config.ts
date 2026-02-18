@@ -1,9 +1,18 @@
 import { defineConfig } from '@playwright/test';
 import { ENV, baseURLs } from './src/config/env';
 
+const timestamp = new Date()
+  .toISOString()
+  .replace(/[:.]/g, '-')
+  .replace('T', '_')
+  .split('Z')[0];
+
+const reportBasePath = `reports/${ENV}/${timestamp}`;
+
 export default defineConfig({
 
   testDir: './tests',
+  outputDir: `reports/${ENV}/playwright/test-results`,
 
   fullyParallel: ENV === 'prod' ? false : true,
 
@@ -44,9 +53,20 @@ export default defineConfig({
   ],
 
   reporter: [
-    ['list'],
-    ['html'],
-    ['allure-playwright']
+  ['list'],
+  [
+    'html',
+    {
+      outputFolder: `${reportBasePath}/playwright/html-report`,
+      open: 'never'
+    }
+  ],
+  [
+    'allure-playwright',
+    {
+      outputFolder: `${reportBasePath}/allure/results`
+    }
   ]
+],
 
 });

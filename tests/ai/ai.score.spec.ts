@@ -50,12 +50,10 @@ test.describe('AI Batch Quality Scoring', () => {
       });
     }
 
-    fs.mkdirSync(scoreConfig.reportsDir, { recursive: true });
+    const aiReportDir = `reports/${process.env.ENV || 'r9int'}/ai`;
+    fs.mkdirSync(aiReportDir, { recursive: true });
+    fs.writeFileSync(`${aiReportDir}/ai-score-report.json`, JSON.stringify(results, null, 2));
 
-    fs.writeFileSync(
-      scoreConfig.reportPath,
-      JSON.stringify(results, null, 2)
-    );
   });
 
   test('AI response consistency scoring (multi-run stability)', async () => {
@@ -87,12 +85,10 @@ test.describe('AI Batch Quality Scoring', () => {
       });
     }
 
-    fs.mkdirSync(scoreConfig.reportsDir, { recursive: true });
+    const aiReportDir = `reports/${process.env.ENV || 'r9int'}/ai`;
+    fs.mkdirSync(aiReportDir, { recursive: true });
+    fs.writeFileSync(`${aiReportDir}/ai-consistency-report.json`, JSON.stringify(consistencyResults, null, 2));
 
-    fs.writeFileSync(
-      `${scoreConfig.reportsDir}/ai-consistency-report.json`,
-      JSON.stringify(consistencyResults, null, 2)
-    );
   });
 
 });
