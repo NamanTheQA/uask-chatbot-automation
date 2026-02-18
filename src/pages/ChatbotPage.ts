@@ -49,8 +49,12 @@ export class ChatbotPage {
     return this.actions.waitForAIResponse();
   }
 
-  async switchLanguage(lang: string) {
-    return this.actions.switchLanguage(lang);
+  async switchSpeechLanguage(lang: string) {
+    return this.actions.switchSpeechLanguage(lang);
+  }
+
+  async toggleLanguageButton(lang: string) {
+    return this.actions.toggleLanguageButton(lang);
   }
 
   // Delegate methods from ChatDataExtractor
