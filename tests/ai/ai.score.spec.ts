@@ -37,7 +37,10 @@ test.describe('AI Batch Quality Scoring', () => {
       const scoreResult = validateAIResponseScore(
         aiText,
         prompt.keywords,
-        responseTime
+        responseTime,
+        prompt.text, // User query for context precision
+        prompt.groundTruth, // Ground truth for correctness
+        prompt.expectedSources // Expected sources for faithfulness
       );
 
       results.push({
@@ -45,6 +48,11 @@ test.describe('AI Batch Quality Scoring', () => {
         question: prompt.text,
         responseTimeMs: scoreResult.responseTimeMs,
         score: scoreResult.score,
+        hallucinationRisk: scoreResult.hallucinationRisk,
+        contextPrecision: scoreResult.contextPrecision,
+        contextRecall: scoreResult.contextRecall,
+        answerCorrectness: scoreResult.answerCorrectness,
+        faithfulness: scoreResult.faithfulness,
         issues: scoreResult.reasons,
         timestamp: new Date().toISOString()
       });
