@@ -1,5 +1,10 @@
 import { SEMANTIC_GROUPS } from './semanticDictionary';
 
+// ================================================================
+// INDIVIDUAL METRIC FUNCTIONS (Building Blocks)
+// ================================================================
+
+// ------------------ SEMANTIC SCORE ------------------
 export function calculateSemanticScore(text: string) {
 
   const cleaned = text.toLowerCase();
@@ -25,27 +30,8 @@ export function calculateSemanticScore(text: string) {
   };
 }
 
-// ------------------ FUNCTIONAL VALIDATION (CI GATE) ------------------
 
-export function validateAIResponse(text: string) {
-
-  const cleaned = text.replace(/\s+/g, ' ').trim();
-
-  if (!cleaned.length) {
-    throw new Error('AI response is empty');
-  }
-
-  const fallbackRegex = /(sorry|try again|unable|error|failed)/i;
-
-  if (fallbackRegex.test(cleaned)) {
-    throw new Error('Fallback or error response detected');
-  }
-
-}
-
-
-// ------------------ HALLUCINATION RISK ENGINE (NEW) ------------------
-
+// ------------------ HALLUCINATION RISK ------------------
 export function calculateHallucinationRisk(
   text: string,
   expectedKeywords: string[]
@@ -105,133 +91,7 @@ export function calculateHallucinationRisk(
 }
 
 
-// ------------------ SCORING ENGINE ------------------
-
-type ValidationResult = {
-  score: number;
-  reasons: string[];
-  responseTimeMs: number;
-  hallucinationRisk?: number;
-  contextPrecision?: number;
-  contextRecall?: number;
-  answerCorrectness?: number;
-  faithfulness?: number;
-};
-
-export function validateAIResponseScore(
-  text: string,
-  expectedKeywords: string[],
-  responseTimeMs: number,
-  userQuery?: string,
-  groundTruth?: string,
-  expectedSources?: string[]
-): ValidationResult {
-
-  let score = 0;
-  const reasons: string[] = [];
-
-  const cleaned = text.replace(/\s+/g, ' ').trim();
-
-  // Non-empty (25)
-  if (cleaned.length > 0) score += 25;
-  else reasons.push('Empty response');
-
-  // No fallback (25)
-  const fallbackRegex = /(sorry|try again|unable|error|failed)/i;
-  if (!fallbackRegex.test(cleaned)) score += 25;
-  else reasons.push('Fallback detected');
-
-  // Topic relevance (30)
-  const matched = expectedKeywords.some(word =>
-    cleaned.toLowerCase().includes(word.toLowerCase())
-  );
-
-  if (matched) score += 30;
-  else reasons.push('Missing topic keywords');
-
-  // Formatting sanity (20)
-  const openTags = (cleaned.match(/</g) || []).length;
-  const closeTags = (cleaned.match(/>/g) || []).length;
-
-  if (openTags === closeTags) score += 20;
-  else reasons.push('Broken formatting');
-
-  // SLA scoring (20)
-  if (responseTimeMs <= 3000) score += 20;
-  else if (responseTimeMs <= 7000) score += 10;
-  else reasons.push(`Slow response: ${responseTimeMs}ms`);
-
-  const hallucination = calculateHallucinationRisk(
-    cleaned,
-    expectedKeywords
-  );
-
-  if (hallucination.hallucinationRisk > 0) {
-    score -= hallucination.hallucinationRisk * 0.4;
-    reasons.push(...hallucination.reasons);
-  }
-
-  // Calculate Context Precision (if query provided)
-  let precisionScore = 0;
-  if (userQuery) {
-    const precision = calculateContextPrecision(cleaned, userQuery, expectedKeywords);
-    precisionScore = precision.precisionScore;
-    if (precisionScore < 70) {
-      reasons.push(...precision.reasons);
-    }
-  }
-
-  // Calculate Context Recall
-  const recall = calculateContextRecall(cleaned, expectedKeywords);
-  const recallScore = recall.recallScore;
-  if (recallScore < 70) {
-    reasons.push(...recall.reasons);
-  }
-
-  // Calculate Answer Correctness (if ground truth provided)
-  let correctnessScore = 0;
-  if (groundTruth) {
-    const correctness = calculateAnswerCorrectness(cleaned, groundTruth, expectedKeywords);
-    correctnessScore = correctness.correctnessScore;
-    if (correctnessScore < 70) {
-      reasons.push(...correctness.reasons);
-    }
-  }
-
-  // Calculate Faithfulness (if expected sources provided)
-  let faithfulnessScore = 0;
-  if (expectedSources && expectedSources.length > 0) {
-    const faithfulness = calculateFaithfulness(cleaned, expectedSources);
-    faithfulnessScore = faithfulness.faithfulnessScore;
-    if (faithfulnessScore < 70) {
-      reasons.push(...faithfulness.reasons);
-    }
-  }
-
-  return {
-    score: Math.max(score, 0),
-    reasons,
-    responseTimeMs,
-    hallucinationRisk: hallucination.hallucinationRisk,
-    contextPrecision: precisionScore,
-    contextRecall: recallScore,
-    answerCorrectness: correctnessScore || undefined,
-    faithfulness: faithfulnessScore || undefined
-  };
-
-  // ⭐ Semantic scoring bonus
-const semantic = calculateSemanticScore(cleaned);
-
-if (semantic.semanticScore > 60) {
-  score += 10;
-} else if (semantic.semanticScore < 30) {
-  reasons.push('Low semantic relevance');
-}
-
-}
-
 // ------------------ CONTEXT PRECISION ------------------
-
 export function calculateContextPrecision(
   aiResponse: string,
   userQuery: string,
@@ -304,8 +164,61 @@ export function calculateContextPrecision(
 }
 
 
-// ------------------ ANSWER CORRECTNESS (GROUND TRUTH) ------------------
+// ------------------ CONTEXT RECALL ------------------
+export function calculateContextRecall(
+  aiResponse: string,
+  expectedKeywords: string[]
+): { recallScore: number; reasons: string[] } {
 
+  let score = 100;
+  const reasons: string[] = [];
+
+  const response = aiResponse.toLowerCase();
+
+  // Check how many expected keywords are covered
+  const coveredKeywords = expectedKeywords.filter(k => 
+    response.includes(k.toLowerCase())
+  );
+
+  const recallRatio = expectedKeywords.length > 0
+    ? (coveredKeywords.length / expectedKeywords.length) * 100
+    : 0;
+
+  if (recallRatio < 40) {
+    score -= 50;
+    reasons.push(`Low recall: Only ${coveredKeywords.length}/${expectedKeywords.length} expected keywords covered`);
+  } else if (recallRatio < 70) {
+    score -= 25;
+    reasons.push(`Moderate recall: ${coveredKeywords.length}/${expectedKeywords.length} expected keywords covered`);
+  } else {
+    reasons.push(`Good recall: ${coveredKeywords.length}/${expectedKeywords.length} keywords covered`);
+  }
+
+  // Check for comprehensive coverage using semantic groups
+  const semantic = calculateSemanticScore(response);
+  
+  if (semantic.semanticScore < 40) {
+    score -= 20;
+    reasons.push('Low semantic coverage across topic groups');
+  }
+
+  // Check if official sources are mentioned (important for recall)
+  const officialSources = ['gov.ae', 'u.ae', 'ica', 'federal authority'];
+  const hasOfficialSource = officialSources.some(s => response.includes(s));
+
+  if (!hasOfficialSource) {
+    score -= 15;
+    reasons.push('Missing official source reference');
+  }
+
+  return {
+    recallScore: Math.max(score, 0),
+    reasons
+  };
+}
+
+
+// ------------------ ANSWER CORRECTNESS (GROUND TRUTH) ------------------
 export function calculateAnswerCorrectness(
   aiResponse: string,
   groundTruth: string,
@@ -370,7 +283,6 @@ export function calculateAnswerCorrectness(
 
 
 // ------------------ FAITHFULNESS TO SOURCE ------------------
-
 export function calculateFaithfulness(
   aiResponse: string,
   expectedSources: string[]
@@ -446,61 +358,7 @@ export function calculateFaithfulness(
 }
 
 
-// ------------------ CONTEXT PRECISION ------------------
-
-export function calculateContextRecall(
-  aiResponse: string,
-  expectedKeywords: string[]
-): { recallScore: number; reasons: string[] } {
-
-  let score = 100;
-  const reasons: string[] = [];
-
-  const response = aiResponse.toLowerCase();
-
-  // Check how many expected keywords are covered
-  const coveredKeywords = expectedKeywords.filter(k => 
-    response.includes(k.toLowerCase())
-  );
-
-  const recallRatio = expectedKeywords.length > 0
-    ? (coveredKeywords.length / expectedKeywords.length) * 100
-    : 0;
-
-  if (recallRatio < 40) {
-    score -= 50;
-    reasons.push(`Low recall: Only ${coveredKeywords.length}/${expectedKeywords.length} expected keywords covered`);
-  } else if (recallRatio < 70) {
-    score -= 25;
-    reasons.push(`Moderate recall: ${coveredKeywords.length}/${expectedKeywords.length} expected keywords covered`);
-  } else {
-    reasons.push(`Good recall: ${coveredKeywords.length}/${expectedKeywords.length} keywords covered`);
-  }
-
-  // Check for comprehensive coverage using semantic groups
-  const semantic = calculateSemanticScore(response);
-  
-  if (semantic.semanticScore < 40) {
-    score -= 20;
-    reasons.push('Low semantic coverage across topic groups');
-  }
-
-  // Check if official sources are mentioned (important for recall)
-  const officialSources = ['gov.ae', 'u.ae', 'ica', 'federal authority'];
-  const hasOfficialSource = officialSources.some(s => response.includes(s));
-
-  if (!hasOfficialSource) {
-    score -= 15;
-    reasons.push('Missing official source reference');
-  }
-
-  return {
-    recallScore: Math.max(score, 0),
-    reasons
-  };
-}
-
-
+// ------------------ CONSISTENCY SCORE ------------------
 export function calculateConsistencyScore(
   response1: string,
   response2: string,
@@ -513,9 +371,7 @@ export function calculateConsistencyScore(
   let score = 100;
   const reasons: string[] = [];
 
-  // -------------------------
   // Keyword consistency
-  // -------------------------
   const keywordMatches1 = expectedKeywords.filter(k => r1.includes(k));
   const keywordMatches2 = expectedKeywords.filter(k => r2.includes(k));
 
@@ -528,9 +384,7 @@ export function calculateConsistencyScore(
     reasons.push('No keyword consistency between responses');
   }
 
-  // -------------------------
   // Length drift detection
-  // -------------------------
   const lenDiff = Math.abs(r1.length - r2.length);
 
   if (lenDiff > 200) {
@@ -538,9 +392,7 @@ export function calculateConsistencyScore(
     reasons.push('Large response length drift');
   }
 
-  // -------------------------
   // Official domain consistency
-  // -------------------------
   const domains = ['gov.ae', 'u.ae'];
 
   const domainInR1 = domains.some(d => r1.includes(d));
@@ -554,6 +406,156 @@ export function calculateConsistencyScore(
   return {
     consistencyScore: Math.max(score, 0),
     reasons
+  };
+
+}
+
+
+// ================================================================
+// FUNCTIONAL VALIDATION (CI GATE)
+// ================================================================
+
+export function validateAIResponse(text: string) {
+
+  const cleaned = text.replace(/\s+/g, ' ').trim();
+
+  if (!cleaned.length) {
+    throw new Error('AI response is empty');
+  }
+
+  const fallbackRegex = /(sorry|try again|unable|error|failed)/i;
+
+  if (fallbackRegex.test(cleaned)) {
+    throw new Error('Fallback or error response detected');
+  }
+
+}
+
+
+// ================================================================
+// COMPREHENSIVE VALIDATION ORCHESTRATOR
+// ================================================================
+
+type ValidationResult = {
+  score: number;
+  reasons: string[];
+  responseTimeMs: number;
+  hallucinationRisk?: number;
+  contextPrecision?: number;
+  contextRecall?: number;
+  answerCorrectness?: number;
+  faithfulness?: number;
+};
+
+export function validateAIResponseScore(
+  text: string,
+  expectedKeywords: string[],
+  responseTimeMs: number,
+  userQuery?: string,
+  groundTruth?: string,
+  expectedSources?: string[]
+): ValidationResult {
+
+  let score = 0;
+  const reasons: string[] = [];
+
+  const cleaned = text.replace(/\s+/g, ' ').trim();
+
+  // Non-empty (25)
+  if (cleaned.length > 0) score += 25;
+  else reasons.push('Empty response');
+
+  // No fallback (25)
+  const fallbackRegex = /(sorry|try again|unable|error|failed)/i;
+  if (!fallbackRegex.test(cleaned)) score += 25;
+  else reasons.push('Fallback detected');
+
+  // Topic relevance (30)
+  const matched = expectedKeywords.some(word =>
+    cleaned.toLowerCase().includes(word.toLowerCase())
+  );
+
+  if (matched) score += 30;
+  else reasons.push('Missing topic keywords');
+
+  // Formatting sanity (20)
+  const openTags = (cleaned.match(/</g) || []).length;
+  const closeTags = (cleaned.match(/>/g) || []).length;
+
+  if (openTags === closeTags) score += 20;
+  else reasons.push('Broken formatting');
+
+  // SLA scoring (20)
+  if (responseTimeMs <= 3000) score += 20;
+  else if (responseTimeMs <= 7000) score += 10;
+  else reasons.push(`Slow response: ${responseTimeMs}ms`);
+
+  // Semantic scoring bonus
+  const semantic = calculateSemanticScore(cleaned);
+
+  if (semantic.semanticScore > 60) {
+    score += 10;
+  } else if (semantic.semanticScore < 30) {
+    reasons.push('Low semantic relevance');
+  }
+
+  // Hallucination penalty
+  const hallucination = calculateHallucinationRisk(
+    cleaned,
+    expectedKeywords
+  );
+
+  if (hallucination.hallucinationRisk > 0) {
+    score -= hallucination.hallucinationRisk * 0.4;
+    reasons.push(...hallucination.reasons);
+  }
+
+  // Calculate Context Precision (if query provided)
+  let precisionScore = 0;
+  if (userQuery) {
+    const precision = calculateContextPrecision(cleaned, userQuery, expectedKeywords);
+    precisionScore = precision.precisionScore;
+    if (precisionScore < 70) {
+      reasons.push(...precision.reasons);
+    }
+  }
+
+  // Calculate Context Recall
+  const recall = calculateContextRecall(cleaned, expectedKeywords);
+  const recallScore = recall.recallScore;
+  if (recallScore < 70) {
+    reasons.push(...recall.reasons);
+  }
+
+  // Calculate Answer Correctness (if ground truth provided)
+  let correctnessScore = 0;
+  if (groundTruth) {
+    const correctness = calculateAnswerCorrectness(cleaned, groundTruth, expectedKeywords);
+    correctnessScore = correctness.correctnessScore;
+    if (correctnessScore < 70) {
+      reasons.push(...correctness.reasons);
+    }
+  }
+
+  // Calculate Faithfulness (if expected sources provided)
+  let faithfulnessScore = 0;
+  if (expectedSources && expectedSources.length > 0) {
+    const faithfulness = calculateFaithfulness(cleaned, expectedSources);
+    faithfulnessScore = faithfulness.faithfulnessScore;
+    if (faithfulnessScore < 70) {
+      reasons.push(...faithfulness.reasons);
+    }
+  }
+
+  return {
+    score: Math.max(score, 0),
+    reasons,
+    responseTimeMs,
+    hallucinationRisk: hallucination.hallucinationRisk,
+    contextPrecision: precisionScore,
+    contextRecall: recallScore,
+    answerCorrectness: correctnessScore || undefined,
+    faithfulness: faithfulnessScore || undefined
   };
 
 }
