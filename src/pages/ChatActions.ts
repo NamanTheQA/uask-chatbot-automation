@@ -51,7 +51,7 @@ export class ChatActions {
     await this.locators.aiMessage.last().waitFor({ timeout: 25000 });
   }
 
-  async switchLanguage(lang: string) {
+  async switchSpeechLanguage(lang: string) {
     const langMap: { [key: string]: string } = {
       'KA': 'ka-GE',
       'AR': 'ar-AE',
@@ -90,5 +90,22 @@ export class ChatActions {
     await this.locators.languageSelect.selectOption(selectValue);
     await this.page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
     await this.page.waitForTimeout(500);
+  }
+
+  async toggleLanguageButton(lang: string) {
+    // Click the language toggle button in top-right corner
+    const toggle = lang.toUpperCase() === 'AR' 
+      ? this.locators.arabicToggle 
+      : this.locators.englishToggle;
+    
+    await toggle.waitFor({ state: 'visible', timeout: 5000 });
+    await toggle.click();
+    
+    // Wait for page to reload/refresh with new language
+    await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+    await this.page.waitForSelector('.targeted-loader-fullhide', { state: 'hidden', timeout: 10000 }).catch(() => {});
+    
+    // Ensure chat window is still visible after refresh
+    await expect(this.locators.chatWindow).toBeVisible();
   }
 }
