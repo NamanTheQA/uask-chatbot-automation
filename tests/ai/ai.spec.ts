@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { ChatbotPage } from '../../src/pages/ChatbotPage';
-import { validateAIResponse } from '../../src/helpers/aiValidator';
+import { validateAIResponse, calculateConsistencyScore } from '../../src/helpers/aiValidator';
 import aiData from '../../src/test-data/ai-data.json';
 
 test.describe('AI Functional Validation (Pass/Fail)', () => {
@@ -65,6 +65,38 @@ test('Fallback message behavior validation', async () => {
   expect(aiText.length).toBeGreaterThan(5);
   expect(aiText.toLowerCase()).not.toContain('error');
 
+});
+
+test('AI consistency between English and Arabic responses', async ({ page }) => {
+
+  const testQuery = "How to check UAE visa status?";
+  const expectedKeywords = ["visa", "status", "check", "ICA"];
+
+  await chat.sendMessage(testQuery);
+  await chat.waitForAIResponse();
+  const englishResponse = await chat.getLastAIResponse();
+
+  await chat.toggleLanguageButton('AR');
+  await page.waitForTimeout(2000);
+
+  const chatAR = new ChatbotPage(page);
+  await chatAR.isChatWindowDisplayed();
+
+  await chatAR.sendMessage("كيف أتحقق من حالة التأشيرة؟");
+  await chatAR.waitForAIResponse();
+  const arabicResponse = await chatAR.getLastAIResponse();
+
+  const consistency = calculateConsistencyScore(
+    englishResponse,
+    arabicResponse,
+    expectedKeywords
+  );
+
+  console.log(`Consistency Score: ${consistency.consistencyScore}%`);
+  console.log(`Reasons: ${consistency.reasons.join(', ')}`);
+
+  // Assert minimum consistency threshold
+  expect(consistency.consistencyScore).toBeGreaterThanOrEqual(60);
 });
 
 });
