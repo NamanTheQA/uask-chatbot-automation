@@ -11,21 +11,14 @@
       "toggle": "AR",
       "message": "مرحبا",
       "direction": "rtl",
-      "placeholderKeyword": "اكتب"
+      "placeholderKeyword": "من فضلك، اطرح سؤالك"
     },
     {
       "lang": "EN",
       "toggle": "EN",
       "message": "Hello",
       "direction": "ltr",
-      "placeholderKeyword": "type"
-    },
-    {
-      "lang": "FR",
-      "toggle": "FR",
-      "message": "Bonjour",
-      "direction": "ltr",
-      "placeholderKeyword": "tapez"
+      "placeholderKeyword": "Please ask me a question"
     }
   ],
 
