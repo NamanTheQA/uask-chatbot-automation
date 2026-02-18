@@ -2,16 +2,22 @@
   {
     "id": "visa-status",
     "text": "How can I check UAE visa status?",
-    "keywords": ["visa", "UAE", "status"]
+    "keywords": ["visa", "UAE", "status"],
+    "groundTruth": "You can check UAE visa status through the Federal Authority for Identity and Citizenship (ICA) portal at ica.gov.ae or using the UAEICP smart services app",
+    "expectedSources": ["ica.gov.ae", "federal authority"]
   },
   {
     "id": "emirates-id-renew",
     "text": "How can I renew Emirates ID?",
-    "keywords": ["Emirates ID", "renew", "ICP"]
+    "keywords": ["Emirates ID", "renew", "ICP"],
+    "groundTruth": "Emirates ID can be renewed online through ICA website or typing centers. Required documents include passport copy, photo, and current Emirates ID",
+    "expectedSources": ["ica.gov.ae", "typing center"]
   },
   {
     "id": "traffic-fines",
     "text": "How can I check traffic fines in UAE?",
-    "keywords": ["traffic", "fine", "UAE"]
+    "keywords": ["traffic", "fine", "UAE"],
+    "groundTruth": "Traffic fines can be checked through MOI app, Abu Dhabi Police website, or Dubai Police website using vehicle plate number or traffic file number",
+    "expectedSources": ["moi", "police", "gov.ae"]
   }
 ]
