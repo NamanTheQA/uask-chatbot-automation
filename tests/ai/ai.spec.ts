@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { BasePage } from '../../src/pages/BasePage';
 import { ChatbotPage } from '../../src/pages/ChatbotPage';
 import { validateAIResponse, calculateConsistencyScore } from '../../src/helpers/aiValidator';
 import aiData from '../../src/test-data/ai-data.json';
@@ -6,10 +7,13 @@ import aiData from '../../src/test-data/ai-data.json';
 test.describe('AI Functional Validation (Pass/Fail)', () => {
 
   let chat: ChatbotPage;
+  let base: BasePage;
 
   test.beforeEach(async ({ page }) => {
     chat = new ChatbotPage(page);
+    base = new BasePage(page);
     await chat.openApp();
+    await base.handleDisclaimerIfPresent();
     await chat.isChatWindowDisplayed();
   });
 
