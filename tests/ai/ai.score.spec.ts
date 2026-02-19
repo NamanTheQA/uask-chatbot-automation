@@ -11,7 +11,7 @@ import {
   calculateFaithfulness,
   calculateConsistencyScore
 } from '../../src/helpers/aiValidator';
-import fs from 'fs';
+import { saveReport } from '../../src/helpers/reportHelper';
 import prompts from '../../src/test-data/ai-prompts.json';
 
 test.describe.configure({ mode: 'serial' });
@@ -67,9 +67,7 @@ test.describe('AI Batch Quality Scoring', () => {
       });
     }
 
-    const aiReportDir = `reports/${process.env.ENV || 'r9int'}/ai`;
-    fs.mkdirSync(aiReportDir, { recursive: true });
-    fs.writeFileSync(`${aiReportDir}/ai-score-report.json`, JSON.stringify(results, null, 2));
+    saveReport('ai-score-report.json', results);
 
   });
 
@@ -88,6 +86,16 @@ test.describe('AI Batch Quality Scoring', () => {
     expect(result.semanticScore).toBeGreaterThanOrEqual(40);
     expect(result.matchedGroups).toBeGreaterThan(0);
 
+    const reportData = {
+      question: prompt.text,
+      semanticScore: result.semanticScore,
+      matchedGroups: result.matchedGroups,
+      totalGroups: result.totalGroups,
+      timestamp: new Date().toISOString()
+    };
+
+    saveReport('semantic-score-report.json', reportData);
+
   });
 
   test('Hallucination Risk - Fabrication detection', async () => {
@@ -104,9 +112,19 @@ test.describe('AI Batch Quality Scoring', () => {
 
     expect(result.hallucinationRisk).toBeLessThan(50);
 
+    const reportData = {
+      question: prompt.text,
+      hallucinationRisk: result.hallucinationRisk,
+      maxRisk: 85,
+      reasons: result.reasons,
+      timestamp: new Date().toISOString()
+    };
+
+    saveReport('hallucination-report.json', reportData);
+
   });
 
-  test('Context Precision - Query relevance check', async () => {
+  test.only('Context Precision - Query relevance check', async () => {
 
     const prompt = prompts[0];
     await chat.sendMessage(prompt.text);
@@ -119,6 +137,15 @@ test.describe('AI Batch Quality Scoring', () => {
     console.log(`Issues: ${result.reasons.join(', ')}`);
 
     expect(result.precisionScore).toBeGreaterThanOrEqual(60);
+
+    const reportData = {
+      question: prompt.text,
+      precisionScore: result.precisionScore,
+      issues: result.reasons,
+      timestamp: new Date().toISOString()
+    };
+
+    saveReport('context-precision-report.json', reportData);
 
   });
 
@@ -136,6 +163,15 @@ test.describe('AI Batch Quality Scoring', () => {
 
     expect(result.recallScore).toBeGreaterThanOrEqual(50);
 
+    const reportData = {
+      question: prompt.text,
+      recallScore: result.recallScore,
+      details: result.reasons,
+      timestamp: new Date().toISOString()
+    };
+
+    saveReport('context-recall-report.json', reportData);
+
   });
 
   test('Answer Correctness - Ground truth comparison', async () => {
@@ -152,6 +188,15 @@ test.describe('AI Batch Quality Scoring', () => {
 
     expect(result.correctnessScore).toBeGreaterThanOrEqual(40);
 
+    const reportData = {
+      question: prompt.text,
+      correctnessScore: result.correctnessScore,
+      issues: result.reasons,
+      timestamp: new Date().toISOString()
+    };
+
+    saveReport('answer-correctness-report.json', reportData);
+
   });
 
   test('Faithfulness - Source citation validation', async () => {
@@ -167,6 +212,15 @@ test.describe('AI Batch Quality Scoring', () => {
     console.log(`Details: ${result.reasons.join(', ')}`);
 
     expect(result.faithfulnessScore).toBeGreaterThanOrEqual(30);
+
+    const reportData = {
+      question: prompt.text,
+      faithfulnessScore: result.faithfulnessScore,
+      details: result.reasons,
+      timestamp: new Date().toISOString()
+    };
+
+    saveReport('faithfulness-report.json', reportData);
 
   });
 
@@ -199,9 +253,7 @@ test.describe('AI Batch Quality Scoring', () => {
       });
     }
 
-    const aiReportDir = `reports/${process.env.ENV || 'r9int'}/ai`;
-    fs.mkdirSync(aiReportDir, { recursive: true });
-    fs.writeFileSync(`${aiReportDir}/ai-consistency-report.json`, JSON.stringify(consistencyResults, null, 2));
+    saveReport('ai-consistency-report.json', consistencyResults);
 
   });
 
