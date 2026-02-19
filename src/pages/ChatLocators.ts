@@ -32,7 +32,7 @@ export class ChatLocators {
 
     this.userMessage = this.page.locator('.user-message, .message');
 
-    this.aiMessage = this.page.locator('.ai-message, [data-role="ai"]');
+    this.aiMessage = this.page.locator('markdown, .ai-message, [data-role="ai"]');
 
     this.loader = this.page.locator('.typing, .loader, .dots');
 
