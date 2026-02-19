@@ -124,7 +124,7 @@ test.describe('AI Batch Quality Scoring', () => {
 
   });
 
-  test.only('Context Precision - Query relevance check', async () => {
+  test('Context Precision - Query relevance check', async () => {
 
     const prompt = prompts[0];
     await chat.sendMessage(prompt.text);
