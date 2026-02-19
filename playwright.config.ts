@@ -18,14 +18,14 @@ export default defineConfig({
 
   timeout: 60000,
 
-  retries: ENV === 'prod' ? 0 : 1,
+  retries: ENV === 'prod' ? 0 : 0,
   workers: ENV === 'prod' ? 1 : 4,
 
   use: {
     baseURL: baseURLs[ENV],
     headless: process.env.HEADED ? false : true,
 
-    viewport: { width: 1920, height: 1080 },
+    viewport: null,
 
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -40,41 +40,44 @@ export default defineConfig({
       name: 'chromium',
       use: {
         browserName: 'chromium',
-        viewport: { width: 1920, height: 1080 }
+        viewport: null,
+        launchOptions: {
+          args: ['--start-maximized']
+        }
       }
     },
-    {
-      name: 'firefox',
-      use: {
-        browserName: 'firefox',
-        viewport: { width: 1920, height: 1080 }
-      }
-    },
-    {
-      name: 'webkit',
-      use: {
-        browserName: 'webkit',
-        viewport: { width: 1920, height: 1080 }
-      }
-    },
-    {
-      name: 'Mobile Chrome',
-      use: {
-        ...devices['Pixel 7'],
-      }
-    },
-    {
-      name: 'Mobile Safari',
-      use: {
-        ...devices['iPhone 14'],
-      }
-    },
-    {
-      name: 'iPad',
-      use: {
-        ...devices['iPad Pro'],
-      }
-    }
+  //   {
+  //     name: 'firefox',
+  //     use: {
+  //       browserName: 'firefox',
+  //       viewport: { width: 1920, height: 1080 }
+  //     }
+  //   },
+  //   {
+  //     name: 'webkit',
+  //     use: {
+  //       browserName: 'webkit',
+  //       viewport: { width: 1920, height: 1080 }
+  //     }
+  //   },
+  //   {
+  //     name: 'Mobile Chrome',
+  //     use: {
+  //       ...devices['Pixel 7'],
+  //     }
+  //   },
+  //   {
+  //     name: 'Mobile Safari',
+  //     use: {
+  //       ...devices['iPhone 14'],
+  //     }
+  //   },
+  //   {
+  //     name: 'iPad',
+  //     use: {
+  //       ...devices['iPad Pro'],
+  //     }
+  //   }
   ],
 
   reporter: [
