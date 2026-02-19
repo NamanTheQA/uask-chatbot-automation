@@ -46,9 +46,34 @@ export class ChatActions {
   }
 
   async waitForAIResponse() {
+    // Wait for loader to appear (AI is thinking)
     await this.locators.loader.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+    
+    // Wait for loader to disappear (AI finished thinking)
     await this.locators.loader.waitFor({ state: 'hidden', timeout: 25000 }).catch(() => {});
+    
+    // Wait for message element to appear
     await this.locators.aiMessage.last().waitFor({ timeout: 25000 });
+    
+    // Wait for streaming to complete (text content stabilizes)
+    await this.page.waitForTimeout(2000);
+    
+    // Additional check: wait for no text changes (streaming stopped)
+    const messageElement = this.locators.aiMessage.last();
+    let previousText = '';
+    let stableCount = 0;
+    
+    for (let i = 0; i < 10; i++) {
+      const currentText = await messageElement.textContent();
+      if (currentText === previousText) {
+        stableCount++;
+        if (stableCount >= 3) break; // Text stable for 3 checks
+      } else {
+        stableCount = 0;
+        previousText = currentText || '';
+      }
+      await this.page.waitForTimeout(300);
+    }
   }
 
   async switchSpeechLanguage(lang: string) {
