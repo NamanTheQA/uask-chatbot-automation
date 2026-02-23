@@ -9,7 +9,9 @@ import {
   calculateContextRecall,
   calculateAnswerCorrectness,
   calculateFaithfulness,
-  calculateConsistencyScore
+  calculateConsistencyScore,
+  validateWithOpenRouter,
+  FREE_MODELS
 } from '../../src/helpers/aiValidator';
 import { saveReport } from '../../src/helpers/reportHelper';
 import prompts from '../../src/test-data/ai-prompts.json';
@@ -149,24 +151,49 @@ test.describe('AI Batch Quality Scoring', () => {
 
   });
 
-  test('Context Recall - Completeness coverage', async () => {
+  test.only('Context Recall - Completeness coverage', async () => {
 
     const prompt = prompts[0];
     await chat.sendMessage(prompt.text);
     await chat.waitForAIResponse();
     const aiText = await chat.getLastAIResponse();
 
+    // Traditional recall calculation
     const result = calculateContextRecall(aiText, prompt.keywords);
 
     console.log(`Context Recall: ${result.recallScore}%`);
     console.log(`Details: ${result.reasons.join(', ')}`);
 
+    // LLM validation
+    const llmValidation = await validateWithOpenRouter(
+      prompt.text,
+      aiText,
+      process.env.OPENROUTER_API_KEY,
+      FREE_MODELS.GEMINI_FLASH
+    );
+
+    console.log(`\nLLM Validation:`);
+    console.log(`  Relevance: ${llmValidation.llmValidation?.relevanceScore}/100`);
+    console.log(`  Appropriateness: ${llmValidation.llmValidation?.appropriatenessScore}/100`);
+    console.log(`  Hallucination: ${llmValidation.llmValidation?.hallucinationDetected ? 'YES' : 'NO'}`);
+    console.log(`  Reasoning: ${llmValidation.llmValidation?.reasoning}`);
+
     expect(result.recallScore).toBeGreaterThanOrEqual(50);
+    expect(llmValidation.llmValidation?.relevanceScore).toBeGreaterThanOrEqual(70);
 
     const reportData = {
       question: prompt.text,
-      recallScore: result.recallScore,
-      details: result.reasons,
+      traditional: {
+        recallScore: result.recallScore,
+        details: result.reasons,
+      },
+      llm: {
+        relevanceScore: llmValidation.llmValidation?.relevanceScore,
+        appropriatenessScore: llmValidation.llmValidation?.appropriatenessScore,
+        hallucinationDetected: llmValidation.llmValidation?.hallucinationDetected,
+        reasoning: llmValidation.llmValidation?.reasoning,
+        passed: llmValidation.passed,
+      },
       timestamp: new Date().toISOString()
     };
 
