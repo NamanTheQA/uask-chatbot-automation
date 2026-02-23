@@ -1,4 +1,8 @@
 import { SEMANTIC_GROUPS } from './semanticDictionary';
+import { validateResponseWithLLM, FREE_MODELS } from './openRouterHelper';
+
+// Re-export FREE_MODELS for convenience
+export { FREE_MODELS } from './openRouterHelper';
 
 // ================================================================
 // INDIVIDUAL METRIC FUNCTIONS (Building Blocks)
@@ -558,4 +562,108 @@ export function validateAIResponseScore(
     faithfulness: faithfulnessScore || undefined
   };
 
+}
+
+// ================================================================
+// LLM-BASED VALIDATION (OpenRouter Integration)
+// ================================================================
+
+/**
+ * Validate response using OpenRouter free LLM models
+ * Provides AI-powered validation for relevance, hallucination, and appropriateness
+ * @param question - The user's question
+ * @param response - The chatbot's response
+ * @param apiKey - OpenRouter API key (optional, uses env var if not provided)
+ * @param model - Free model to use (defaults to Gemini Flash)
+ */
+export async function validateWithOpenRouter(
+  question: string,
+  response: string,
+  apiKey?: string,
+  model: string = FREE_MODELS.GEMINI_FLASH
+) {
+  const key = apiKey || process.env.OPENROUTER_API_KEY;
+  
+  if (!key) {
+    throw new Error('OpenRouter API key not provided. Set OPENROUTER_API_KEY in .env file or pass as parameter.');
+  }
+
+  try {
+    const result = await validateResponseWithLLM(question, response, key, model);
+    
+    return {
+      llmValidation: {
+        relevanceScore: result.relevanceScore,
+        hallucinationDetected: result.hallucinationDetected,
+        appropriatenessScore: result.appropriatenessScore,
+        reasoning: result.reasoning,
+        model,
+      },
+      passed: result.relevanceScore >= 70 && 
+              result.appropriatenessScore >= 70 && 
+              !result.hallucinationDetected,
+      raw: result.raw,
+    };
+  } catch (error) {
+    console.error('OpenRouter validation failed:', error);
+    return {
+      llmValidation: {
+        relevanceScore: 0,
+        hallucinationDetected: false,
+        appropriatenessScore: 0,
+        reasoning: `Validation failed: ${error}`,
+        model,
+      },
+      passed: false,
+      error: String(error),
+    };
+  }
+}
+
+/**
+ * Enhanced comprehensive validation combining traditional metrics + LLM validation
+ * @param question - The user's question
+ * @param response - The chatbot's response  
+ * @param options - Validation options including OpenRouter config
+ */
+export async function validateAIResponseWithLLM(
+  question: string,
+  response: string,
+  options: {
+    expectedKeywords: string[];
+    expectedSources?: string[];
+    responseTimeMs: number;
+    minScore?: number;
+    openRouterApiKey?: string;
+    openRouterModel?: string;
+    useLLM?: boolean;
+  }
+) {
+  // Run traditional validation
+  const traditionalValidation = validateAIResponseScore(
+    response,
+    options.expectedKeywords,
+    options.responseTimeMs,
+    question,
+    undefined, // groundTruth
+    options.expectedSources
+  );
+
+  // Run LLM validation if enabled
+  let llmValidation;
+  if (options.useLLM !== false) {
+    llmValidation = await validateWithOpenRouter(
+      question,
+      response,
+      options.openRouterApiKey,
+      options.openRouterModel
+    );
+  }
+
+  return {
+    traditional: traditionalValidation,
+    llm: llmValidation,
+    overallPassed: traditionalValidation.score >= (options.minScore || 60) && 
+                   (llmValidation?.passed !== false),
+  };
 }
