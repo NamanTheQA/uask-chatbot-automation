@@ -18,6 +18,7 @@ Automated test suite for UAE Government's U-Ask AI chatbot using Playwright and 
 - Semantic scoring
 - Ground truth validation
 - Source citation checking
+- **LLM-based validation** (OpenRouter integration)
 
 **Security Tests**
 - XSS prevention
@@ -42,6 +43,8 @@ uask-chatbot-automation/
 │   ├── helpers/
 │   │   ├── a11y.ts                   # Accessibility validator
 │   │   ├── aiValidator.ts            # AI response scoring engine
+│   │   ├── openRouterHelper.ts       # LLM API integration
+│   │   ├── reportHelper.ts           # Report generation
 │   │   └── semanticDictionary.ts     # Domain-specific keywords
 │   ├── pages/
 │   │   ├── BasePage.ts               # Base page object
@@ -63,7 +66,8 @@ uask-chatbot-automation/
 │   │   └── multilingual.spec.ts      # Language toggle tests
 │   ├── ai/
 │   │   ├── ai.spec.ts                # AI functional tests
-│   │   └── ai.score.spec.ts          # AI quality scoring
+│   │   ├── ai.score.spec.ts          # AI quality scoring
+│   │   └── ai.llm.spec.ts            # LLM-based validation
 │   ├── security/
 │   │   └── security.spec.ts          # Security validation
 │   └── accessibility/
@@ -85,6 +89,13 @@ git clone https://github.com/NamanTheQA/uask-chatbot-automation.git
 cd uask-chatbot-automation
 npm install
 npx playwright install
+
+# Optional: Setup OpenRouter for LLM validation
+# 1. Get free API key from https://openrouter.ai/keys
+# 2. Create .env file:
+cp .env.example .env
+# 3. Add your API key to .env:
+OPENROUTER_API_KEY=your_key_here
 ```
 
 ## Running Tests
@@ -108,6 +119,8 @@ npx playwright test --project=chromium
 
 The framework validates AI responses using these metrics:
 
+**Traditional Metrics (Keyword/Pattern-Based)**
+
 **Hallucination Detection**
 Checks for fabricated content like fake phone numbers, unrealistic guarantees, or missing expected keywords.
 
@@ -126,12 +139,38 @@ Verifies that responses cite official UAE government sources (gov.ae, u.ae, ica.
 **Semantic Score**
 Measures topic diversity across visa, status, application, and UAE-related content.
 
+**LLM-Based Validation (OpenRouter Integration)**
+
+Uses free AI models to validate responses:
+- **Relevance Score**: How well the answer addresses the question (0-100)
+- **Hallucination Detection**: AI-powered fabrication detection
+- **Appropriateness Score**: Professional and suitable for government service (0-100)
+- **Reasoning**: Detailed explanation of the assessment
+
+**Available Free Models**:
+- Google Gemini Flash 1.5
+- Meta Llama 3.2 (3B, 1B)
+- Mistral 7B
+- Microsoft Phi-3 Mini
+
+**Benefits**:
+- More sophisticated validation than keyword matching
+- Understands context and nuance
+- Detects subtle quality issues
+- No cost (free tier models)
+
+
 ## Test Reports
 
 Reports are generated in `reports/{ENV}/ai/`:
 - `ai-score-report.json` - Comprehensive quality scores
 - `ai-consistency-report.json` - Response stability metrics
 - Individual metric reports (semantic-score-report.json, etc.)
+- **LLM validation reports**:
+  - `llm-single-validation.json` - Single response LLM validation
+  - `llm-enhanced-validation.json` - Combined traditional + LLM
+  - `llm-batch-validation.json` - Batch validation results
+  - `llm-model-comparison.json` - Free model performance comparison
 
 View HTML report:
 ```bash
@@ -160,9 +199,10 @@ Tests may fail intermittently due to CAPTCHA on the chatbot. For consistent resu
 | UI Behavior | 7 | Partial |
 | Multilingual | 2 | Partial |
 | AI Quality | 8 | Partial |
+| AI LLM Validation | 4 | New |
 | Security | 4 | Partial |
 | Accessibility | 3 | Partial |
-| **Total** | **24** | **Partial** |
+| **Total** | **28** | **Partial** |
 
 ---
 
