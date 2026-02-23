@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 import { ENV, baseURLs } from './src/config/env';
+import * as dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config();
 
 const timestamp = new Date()
   .toISOString()
