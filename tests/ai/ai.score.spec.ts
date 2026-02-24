@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { BasePage } from '../../src/pages/BasePage';
 import { ChatbotPage } from '../../src/pages/ChatbotPage';
+import { OPENROUTER_API_KEY } from '../../src/config/env';
 import {
   validateAIResponseScore,
   calculateSemanticScore,
@@ -158,17 +159,16 @@ test.describe('AI Batch Quality Scoring', () => {
     await chat.waitForAIResponse();
     const aiText = await chat.getLastAIResponse();
 
-    // Traditional recall calculation
     const result = calculateContextRecall(aiText, prompt.keywords);
 
     console.log(`Context Recall: ${result.recallScore}%`);
     console.log(`Details: ${result.reasons.join(', ')}`);
 
-    // LLM validation
+    // LLM validation using API key from env.ts
     const llmValidation = await validateWithOpenRouter(
       prompt.text,
       aiText,
-      process.env.OPENROUTER_API_KEY,
+      OPENROUTER_API_KEY,
       FREE_MODELS.GEMINI_FLASH
     );
 
@@ -187,13 +187,7 @@ test.describe('AI Batch Quality Scoring', () => {
         recallScore: result.recallScore,
         details: result.reasons,
       },
-      llm: {
-        relevanceScore: llmValidation.llmValidation?.relevanceScore,
-        appropriatenessScore: llmValidation.llmValidation?.appropriatenessScore,
-        hallucinationDetected: llmValidation.llmValidation?.hallucinationDetected,
-        reasoning: llmValidation.llmValidation?.reasoning,
-        passed: llmValidation.passed,
-      },
+      llm: llmValidation.llmValidation,
       timestamp: new Date().toISOString()
     };
 
