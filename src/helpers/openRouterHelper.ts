@@ -82,14 +82,6 @@ export async function callOpenRouter(
   }
 }
 
-/**
- * Validate chatbot response using LLM
- * @param question - The user's question
- * @param response - The chatbot's response
- * @param apiKey - OpenRouter API key
- * @param model - Model to use (defaults to Gemini Flash free)
- * @returns Validation result with scores and reasoning
- */
 export async function validateResponseWithLLM(
   question: string,
   response: string,
@@ -148,6 +140,7 @@ Analyze this Q&A pair and provide your assessment.`;
       reasoning: result.reasoning || 'No reasoning provided',
       raw: content,
     };
+
   } catch (error) {
     // If parsing fails, return default values
     console.warn('Failed to parse LLM response:', content);
@@ -161,13 +154,6 @@ Analyze this Q&A pair and provide your assessment.`;
   }
 }
 
-/**
- * Batch validate multiple responses
- * @param qaPairs - Array of question-answer pairs
- * @param apiKey - OpenRouter API key
- * @param model - Model to use
- * @returns Array of validation results
- */
 export async function batchValidateResponses(
   qaPairs: Array<{ question: string; response: string }>,
   apiKey: string,

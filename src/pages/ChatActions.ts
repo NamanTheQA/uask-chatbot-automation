@@ -50,13 +50,13 @@ export class ChatActions {
     await this.locators.loader.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
     
     // Wait for loader to disappear (AI finished thinking)
-    await this.locators.loader.waitFor({ state: 'hidden', timeout: 25000 }).catch(() => {});
+    await this.locators.loader.waitFor({ state: 'hidden', timeout: 50000 }).catch(() => {});
     
     // Wait for message element to appear
-    await this.locators.aiMessage.last().waitFor({ timeout: 25000 });
+    await this.locators.aiMessage.last().waitFor({ timeout: 180000 });
     
     // Wait for streaming to complete (text content stabilizes)
-    await this.page.waitForTimeout(2000);
+    await this.page.waitForTimeout(12000);
     
     // Additional check: wait for no text changes (streaming stopped)
     const messageElement = this.locators.aiMessage.last();

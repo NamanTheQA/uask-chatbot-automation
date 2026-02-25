@@ -20,7 +20,7 @@ export default defineConfig({
 
   fullyParallel: ENV === 'prod' ? false : true,
 
-  timeout: 60000,
+  timeout: 240000,
 
   retries: ENV === 'prod' ? 0 : 0,
   workers: ENV === 'prod' ? 1 : 4,

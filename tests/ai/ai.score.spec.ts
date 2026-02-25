@@ -50,9 +50,9 @@ test.describe('AI Batch Quality Scoring', () => {
         aiText,
         prompt.keywords,
         responseTime,
-        prompt.text, // User query for context precision
-        prompt.groundTruth, // Ground truth for correctness
-        prompt.expectedSources // Expected sources for faithfulness
+        prompt.text,
+        prompt.groundTruth,
+        prompt.expectedSources
       );
 
       results.push({
@@ -169,7 +169,7 @@ test.describe('AI Batch Quality Scoring', () => {
       prompt.text,
       aiText,
       OPENROUTER_API_KEY,
-      FREE_MODELS.GEMINI_FLASH
+      FREE_MODELS.LLAMA_3_2_3B
     );
 
     console.log(`\nLLM Validation:`);

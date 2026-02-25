@@ -4,6 +4,7 @@ import { ChatbotPage } from '../../src/pages/ChatbotPage';
 import { validateWithOpenRouter, validateAIResponseWithLLM, FREE_MODELS } from '../../src/helpers/aiValidator';
 import { saveReport } from '../../src/helpers/reportHelper';
 import aiPrompts from '../../src/test-data/ai-prompts.json';
+import { OPENROUTER_API_KEY } from '../../src/config/env';
 
 test.describe('AI LLM Validation Suite', () => {
   let basePage: BasePage;
@@ -22,11 +23,7 @@ test.describe('AI LLM Validation Suite', () => {
     const testCase = aiPrompts[0];
     
     const startTime = Date.now();
-    await chatbotPage.sendMessage(testCase.text);
-    
-    console.log('\n⏸️  Waiting 40 seconds for CAPTCHA - please solve manually...\n');
-    await page.waitForTimeout(40000);
-    
+    await chatbotPage.sendMessage(testCase.text);    
     await chatbotPage.waitForAIResponse();
     const responseTime = Date.now() - startTime;
     
@@ -43,7 +40,7 @@ test.describe('AI LLM Validation Suite', () => {
     const validation = await validateWithOpenRouter(
       testCase.text,
       aiResponse,
-      process.env.OPENROUTER_API_KEY,
+      OPENROUTER_API_KEY,
       FREE_MODELS.GEMINI_FLASH
     );
 

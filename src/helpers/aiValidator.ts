@@ -564,18 +564,6 @@ export function validateAIResponseScore(
 
 }
 
-// ================================================================
-// LLM-BASED VALIDATION (OpenRouter Integration)
-// ================================================================
-
-/**
- * Validate response using OpenRouter free LLM models
- * Provides AI-powered validation for relevance, hallucination, and appropriateness
- * @param question - The user's question
- * @param response - The chatbot's response
- * @param apiKey - OpenRouter API key (optional, uses env var if not provided)
- * @param model - Free model to use (defaults to Gemini Flash)
- */
 export async function validateWithOpenRouter(
   question: string,
   response: string,
