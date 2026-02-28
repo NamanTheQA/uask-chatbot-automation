@@ -7,9 +7,10 @@ const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 export const FREE_MODELS = {
   LLAMA_3_2_3B: 'meta-llama/llama-3.2-3b-instruct:free',
   LLAMA_3_2_1B: 'meta-llama/llama-3.2-1b-instruct:free',
-  GEMINI_FLASH: 'google/gemini-flash-1.5:free',
+  GEMINI_FLASH: 'google/gemini-flash-1.5-latest',
   MISTRAL_7B: 'mistralai/mistral-7b-instruct:free',
   PHI_3_MINI: 'microsoft/phi-3-mini-128k-instruct:free',
+  GEMINI_PRO: 'google/gemini-3-pro-preview'
 };
 
 // Premium models (require credits on OpenRouter account)

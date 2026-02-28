@@ -170,7 +170,7 @@ test.describe('AI Batch Quality Scoring', () => {
       prompt.text,
       aiText,
       OPENROUTER_API_KEY,
-      PREMIUM_MODELS.GPT_4O_MINI
+      FREE_MODELS.GEMINI_PRO
     );
 
     console.log(`\nLLM Validation:`);
