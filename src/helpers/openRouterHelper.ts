@@ -12,6 +12,14 @@ export const FREE_MODELS = {
   PHI_3_MINI: 'microsoft/phi-3-mini-128k-instruct:free',
 };
 
+// Premium models (require credits on OpenRouter account)
+export const PREMIUM_MODELS = {
+  GPT_4O_MINI: 'openai/gpt-4o-mini',
+  GPT_4O: 'openai/gpt-4o',
+  CLAUDE_3_5_SONNET: 'anthropic/claude-3.5-sonnet',
+  GEMINI_PRO: 'google/gemini-pro-1.5',
+};
+
 export interface OpenRouterRequest {
   model: string;
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
