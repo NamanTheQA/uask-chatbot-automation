@@ -1,8 +1,8 @@
 import { SEMANTIC_GROUPS } from './semanticDictionary';
-import { validateResponseWithLLM, FREE_MODELS } from './openRouterHelper';
+import { validateResponseWithLLM, FREE_MODELS, PREMIUM_MODELS } from './openRouterHelper';
 
-// Re-export FREE_MODELS for convenience
-export { FREE_MODELS } from './openRouterHelper';
+// Re-export FREE_MODELS and PREMIUM_MODELS for convenience
+export { FREE_MODELS, PREMIUM_MODELS } from './openRouterHelper';
 
 // ================================================================
 // INDIVIDUAL METRIC FUNCTIONS (Building Blocks)
