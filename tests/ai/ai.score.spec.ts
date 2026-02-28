@@ -12,7 +12,8 @@ import {
   calculateFaithfulness,
   calculateConsistencyScore,
   validateWithOpenRouter,
-  FREE_MODELS
+  FREE_MODELS,
+  PREMIUM_MODELS
 } from '../../src/helpers/aiValidator';
 import { saveReport } from '../../src/helpers/reportHelper';
 import prompts from '../../src/test-data/ai-prompts.json';
@@ -164,12 +165,12 @@ test.describe('AI Batch Quality Scoring', () => {
     console.log(`Context Recall: ${result.recallScore}%`);
     console.log(`Details: ${result.reasons.join(', ')}`);
 
-    // LLM validation using API key from env.ts
+    // LLM validation using GPT-4o Mini (premium model - requires credits)
     const llmValidation = await validateWithOpenRouter(
       prompt.text,
       aiText,
       OPENROUTER_API_KEY,
-      FREE_MODELS.LLAMA_3_2_3B
+      PREMIUM_MODELS.GPT_4O_MINI
     );
 
     console.log(`\nLLM Validation:`);
