@@ -133,7 +133,7 @@ test.describe('AI Quality Scoring - Negative Tests', () => {
     saveReport('llm-validation-real-edge-case.json', reportData);
   });
 
-  test.skip('LLM Validation - Subtle Hallucination Missed', async () => {
+  test('LLM Validation - Subtle Hallucination Missed', async () => {
     const question = "How can I check the status of my visa application?";
     const subtleHallucinationResponse = "You can check your visa application status through the official ICP portal (icp.gov.ae). Login with your Emirates ID credentials and navigate to the 'My Applications' section. The system is updated every 48 hours with the latest application status.";
     
