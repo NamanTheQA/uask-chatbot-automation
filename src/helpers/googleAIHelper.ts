@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
 export async function validateWithGoogleAI(
   question: string,
@@ -6,41 +6,38 @@ export async function validateWithGoogleAI(
   apiKey: string
 ) {
   try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const genAI = new GoogleGenAI({ apiKey });
+    const model = await genAI.models.get('gemini-2.0-flash');
 
-    const systemPrompt = `You are an expert at evaluating chatbot responses for a UAE government service chatbot.
+    const prompt = `You are an expert at evaluating chatbot responses for a UAE government service chatbot.
+Analyze the response and provide your assessment in valid JSON format only (no markdown, no code blocks).
 
-Analyze the response and provide your evaluation in JSON format:
-{
-  "relevanceScore": 0-100,
-  "hallucinationDetected": true/false,
-  "appropriatenessScore": 0-100,
-  "reasoning": "Brief explanation"
-}
+Return exactly this structure:
+{"relevanceScore": 0-100, "hallucinationDetected": true/false, "appropriatenessScore": 0-100, "reasoning": "brief explanation"}
 
 Evaluation criteria:
-1. Relevance (0-100): How well does the answer address the question?
+1. Relevance score (0-100): How well does the answer address the question?
 2. Hallucination detection: Does the response contain fabricated information?
-3. Appropriateness (0-100): Is the response professional and suitable for government service?
-4. Reasoning: Brief explanation of your assessment.`;
-
-    const prompt = `${systemPrompt}
+3. Appropriateness score (0-100): Is the response professional and suitable for government service?
 
 Question: ${question}
 
-Response: ${response}
+Chatbot Response: ${response}
 
-Provide your evaluation in JSON format:`;
+Provide your assessment in JSON format only (no markdown formatting):`;
 
     const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    let text = result.text;
     
-    console.log('Google AI raw response:', text);
+    console.log('Google AI raw response:', text.substring(0, 500));
+
+    // Remove markdown code block markers if present
+    text = text.replace(/```json\s*/gi, '').replace(/```\s*$/gi, '').trim();
 
     // Extract JSON from response
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
+      console.warn('No JSON found in response:', text.substring(0, 300));
       throw new Error('Could not parse JSON from Google AI response');
     }
 
@@ -52,7 +49,7 @@ Provide your evaluation in JSON format:`;
         hallucinationDetected: parsed.hallucinationDetected || false,
         appropriatenessScore: parsed.appropriatenessScore || 0,
         reasoning: parsed.reasoning || 'No reasoning provided',
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.0-flash',
       },
       passed: parsed.relevanceScore >= 70 && 
               parsed.appropriatenessScore >= 70 && 
@@ -67,7 +64,7 @@ Provide your evaluation in JSON format:`;
         hallucinationDetected: false,
         appropriatenessScore: 0,
         reasoning: `Validation failed: ${error}`,
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.0-flash',
       },
       passed: false,
       error: String(error),
