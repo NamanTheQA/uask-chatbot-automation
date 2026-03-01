@@ -127,7 +127,7 @@ Provide your assessment in JSON format only (no markdown formatting):`;
       { role: 'user', content: userPrompt },
     ],
     temperature: 0.3,
-    max_tokens: 800,
+    max_tokens: 1500,
   });
 
   let content = llmResponse.choices[0]?.message?.content || '{}';
@@ -136,14 +136,16 @@ Provide your assessment in JSON format only (no markdown formatting):`;
     // Remove markdown code block markers if present
     content = content.replace(/```json\s*/gi, '').replace(/```\s*$/gi, '').trim();
     
-    // Try to extract JSON from response
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      console.warn('No JSON object found in response:', content.substring(0, 300));
-      throw new Error('Invalid JSON format - no object found');
+    // Try to extract JSON from response - find first { to last }
+    const firstBrace = content.indexOf('{');
+    const lastBrace = content.lastIndexOf('}');
+    
+    if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+      console.warn('No valid JSON object found in response:', content.substring(0, 300));
+      throw new Error('Invalid JSON format - no complete object found');
     }
     
-    const jsonStr = jsonMatch[0];
+    const jsonStr = content.substring(firstBrace, lastBrace + 1);
     const result = JSON.parse(jsonStr);
 
     return {
