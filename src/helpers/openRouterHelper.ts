@@ -130,12 +130,20 @@ Provide your assessment in JSON format only (no markdown formatting):`;
     max_tokens: 800,
   });
 
-  const content = llmResponse.choices[0]?.message?.content || '{}';
+  let content = llmResponse.choices[0]?.message?.content || '{}';
 
   try {
-    // Try to extract JSON from response (some models wrap it in markdown)
+    // Remove markdown code block markers if present
+    content = content.replace(/```json\s*/gi, '').replace(/```\s*$/gi, '').trim();
+    
+    // Try to extract JSON from response
     const jsonMatch = content.match(/\{[\s\S]*\}/);
-    const jsonStr = jsonMatch ? jsonMatch[0] : content;
+    if (!jsonMatch) {
+      console.warn('No JSON object found in response:', content.substring(0, 300));
+      throw new Error('Invalid JSON format - no object found');
+    }
+    
+    const jsonStr = jsonMatch[0];
     const result = JSON.parse(jsonStr);
 
     return {
@@ -148,12 +156,13 @@ Provide your assessment in JSON format only (no markdown formatting):`;
 
   } catch (error) {
     // If parsing fails, return default values
-    console.warn('Failed to parse LLM response:', content);
+    console.warn('Failed to parse LLM response:', content.substring(0, 300));
+    console.error('Parse error:', error);
     return {
       relevanceScore: 50,
       hallucinationDetected: false,
       appropriatenessScore: 50,
-      reasoning: `LLM response could not be parsed: ${content}`,
+      reasoning: `LLM response could not be parsed: ${error}`,
       raw: content,
     };
   }
