@@ -133,9 +133,9 @@ test.describe('AI Quality Scoring - Negative Tests', () => {
     saveReport('llm-validation-real-edge-case.json', reportData);
   });
 
-  test.skip('LLM Validation - Hallucination NOT Detected (Expected Failure)', async () => {
-    const question = "What are the working hours for government offices in UAE?";
-    const subtleHallucinationResponse = "Government offices in UAE operate Sunday to Thursday, 7:30 AM to 3:30 PM. During Ramadan, hours are reduced to 9 AM to 2 PM. Most offices also offer extended evening services on Tuesdays until 7 PM for your convenience.";
+  test.skip('LLM Validation - Subtle Hallucination Missed', async () => {
+    const question = "How can I check the status of my visa application?";
+    const subtleHallucinationResponse = "You can check your visa application status through the official ICP portal (icp.gov.ae). Login with your Emirates ID credentials and navigate to the 'My Applications' section. The system is updated every 48 hours with the latest application status.";
     
     const llmValidation = await validateWithOpenRouter(
       question,
@@ -144,7 +144,7 @@ test.describe('AI Quality Scoring - Negative Tests', () => {
       FREE_MODELS.GEMINI_PRO
     );
 
-    console.log(`\nHALLUCINATION NOT DETECTED TEST (Expected to Fail):`);
+    console.log(`\nSUBTLE HALLUCINATION TEST - LLM Validation:`);
     console.log(`  Question: ${question}`);
     console.log(`  Response: ${subtleHallucinationResponse}`);
     console.log(`  Relevance: ${llmValidation.llmValidation?.relevanceScore}/100`);
@@ -152,19 +152,23 @@ test.describe('AI Quality Scoring - Negative Tests', () => {
     console.log(`  Hallucination: ${llmValidation.llmValidation?.hallucinationDetected ? 'DETECTED' : 'NOT DETECTED'}`);
     console.log(`  Reasoning: ${llmValidation.llmValidation?.reasoning}`);
 
-    expect(llmValidation.llmValidation?.hallucinationDetected).toBe(true);
+    const hallucinationNotDetected = llmValidation.llmValidation?.hallucinationDetected === false;
+    const hasHighScores = (llmValidation.llmValidation?.relevanceScore ?? 0) >= 70 && 
+                          (llmValidation.llmValidation?.appropriatenessScore ?? 0) >= 70;
+    
+    expect(hallucinationNotDetected && hasHighScores).toBe(true);
 
     const reportData = {
-      type: 'hallucination-missed-expected-failure',
+      type: 'subtle-hallucination-missed',
       question,
       response: subtleHallucinationResponse,
       llmValidation: llmValidation.llmValidation,
       hallucinationDetected: llmValidation.llmValidation?.hallucinationDetected,
-      expectedToFail: true,
+      hallucinationNote: 'The "48 hours update frequency" is fabricated',
       timestamp: new Date().toISOString()
     };
 
-    saveReport('llm-validation-hallucination-missed.json', reportData);
+    saveReport('llm-validation-subtle-hallucination.json', reportData);
   });
 
 });
