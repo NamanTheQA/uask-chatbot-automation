@@ -134,8 +134,8 @@ test.describe('AI Quality Scoring - Negative Tests', () => {
   });
 
   test.skip('LLM Validation - Hallucination NOT Detected (Expected Failure)', async () => {
-    const question = "How long does it take to process a UAE work visa?";
-    const subtleHallucinationResponse = "Work visa processing typically takes 5-7 business days. You can track your application online through the ICP portal. For urgent cases, there's a 72-hour express guarantee service available for an additional fee of AED 500.";
+    const question = "What are the working hours for government offices in UAE?";
+    const subtleHallucinationResponse = "Government offices in UAE operate Sunday to Thursday, 7:30 AM to 3:30 PM. During Ramadan, hours are reduced to 9 AM to 2 PM. Most offices also offer extended evening services on Tuesdays until 7 PM for your convenience.";
     
     const llmValidation = await validateWithOpenRouter(
       question,
