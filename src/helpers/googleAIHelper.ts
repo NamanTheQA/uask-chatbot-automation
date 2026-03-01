@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export async function validateWithGoogleAI(
   question: string,
@@ -6,8 +6,8 @@ export async function validateWithGoogleAI(
   apiKey: string
 ) {
   try {
-    const genAI = new GoogleGenAI({ apiKey });
-    const model = await genAI.models.get('gemini-2.0-flash');
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
     const prompt = `You are an expert at evaluating chatbot responses for a UAE government service chatbot.
 Analyze the response and provide your assessment in valid JSON format only (no markdown, no code blocks).
@@ -27,7 +27,7 @@ Chatbot Response: ${response}
 Provide your assessment in JSON format only (no markdown formatting):`;
 
     const result = await model.generateContent(prompt);
-    let text = result.text;
+    let text = result.response.text();
     
     console.log('Google AI raw response:', text.substring(0, 500));
 
@@ -49,7 +49,7 @@ Provide your assessment in JSON format only (no markdown formatting):`;
         hallucinationDetected: parsed.hallucinationDetected || false,
         appropriatenessScore: parsed.appropriatenessScore || 0,
         reasoning: parsed.reasoning || 'No reasoning provided',
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.0-flash-exp',
       },
       passed: parsed.relevanceScore >= 70 && 
               parsed.appropriatenessScore >= 70 && 
@@ -64,7 +64,7 @@ Provide your assessment in JSON format only (no markdown formatting):`;
         hallucinationDetected: false,
         appropriatenessScore: 0,
         reasoning: `Validation failed: ${error}`,
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.0-flash-exp',
       },
       passed: false,
       error: String(error),
