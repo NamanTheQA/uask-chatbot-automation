@@ -140,12 +140,31 @@ Provide your assessment in JSON format only (no markdown formatting):`;
     const firstBrace = content.indexOf('{');
     const lastBrace = content.lastIndexOf('}');
     
-    if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+    if (firstBrace === -1) {
       console.warn('No valid JSON object found in response:', content.substring(0, 300));
-      throw new Error('Invalid JSON format - no complete object found');
+      throw new Error('Invalid JSON format - no opening brace found');
     }
     
-    const jsonStr = content.substring(firstBrace, lastBrace + 1);
+    let jsonStr = content.substring(firstBrace, lastBrace > firstBrace ? lastBrace + 1 : content.length);
+    
+    // Try to fix incomplete JSON by closing quotes and braces
+    if (lastBrace === -1 || lastBrace <= firstBrace) {
+      console.warn('JSON appears incomplete, attempting to fix...', jsonStr.substring(0, 200));
+      // If the last character is not a closing brace, try to add one
+      jsonStr = jsonStr.trim();
+      if (!jsonStr.endsWith('}')) {
+        // Check if we have an unclosed string
+        const lastQuote = jsonStr.lastIndexOf('"');
+        const lastColon = jsonStr.lastIndexOf(':');
+        if (lastQuote > lastColon) {
+          // Likely incomplete value, add closing quote and brace
+          jsonStr += '"}';
+        } else {
+          jsonStr += '}';
+        }
+      }
+    }
+    
     const result = JSON.parse(jsonStr);
 
     return {
@@ -157,9 +176,27 @@ Provide your assessment in JSON format only (no markdown formatting):`;
     };
 
   } catch (error) {
-    // If parsing fails, return default values
+    // If parsing fails, try to extract individual fields using regex as last resort
     console.warn('Failed to parse LLM response:', content.substring(0, 300));
     console.error('Parse error:', error);
+    
+    // Try to extract values using regex
+    const relevanceMatch = content.match(/"relevanceScore":\s*(\d+)/);
+    const hallucinationMatch = content.match(/"hallucinationDetected":\s*(true|false)/);
+    const appropriatenessMatch = content.match(/"appropriatenessScore":\s*(\d+)/);
+    const reasoningMatch = content.match(/"reasoning":\s*"([^"]*)/);
+    
+    if (relevanceMatch || hallucinationMatch || appropriatenessMatch) {
+      console.log('Extracted partial values from incomplete JSON');
+      return {
+        relevanceScore: relevanceMatch ? parseInt(relevanceMatch[1]) : 50,
+        hallucinationDetected: hallucinationMatch ? hallucinationMatch[1] === 'true' : false,
+        appropriatenessScore: appropriatenessMatch ? parseInt(appropriatenessMatch[1]) : 50,
+        reasoning: reasoningMatch ? reasoningMatch[1] : `Partial parse - ${error}`,
+        raw: content,
+      };
+    }
+    
     return {
       relevanceScore: 50,
       hallucinationDetected: false,
