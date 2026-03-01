@@ -165,7 +165,7 @@ test.describe('AI Batch Quality Scoring', () => {
     console.log(`Context Recall: ${result.recallScore}%`);
     console.log(`Details: ${result.reasons.join(', ')}`);
 
-    // LLM validation using GPT-4o Mini (premium model - requires credits)
+    // LLM validation using Gemini Pro Preview
     const llmValidation = await validateWithOpenRouter(
       prompt.text,
       aiText,
@@ -194,6 +194,88 @@ test.describe('AI Batch Quality Scoring', () => {
 
     saveReport('context-recall-report.json', reportData);
 
+  });
+
+  test.only('LLM Validation - Hardcoded Bad Response Demo', async () => {
+    // This test demonstrates LLM catching inappropriate/irrelevant hardcoded responses
+    
+    const question = "How can I check UAE visa status?";
+    
+    // Hardcoded bad response (irrelevant/unprofessional)
+    const badResponse = "I don't know, maybe try Google? Anyway, did you watch the game last night?";
+    
+    const llmValidation = await validateWithOpenRouter(
+      question,
+      badResponse,
+      OPENROUTER_API_KEY,
+      FREE_MODELS.GEMINI_PRO
+    );
+
+    console.log(`\n🔴 HARDCODED BAD RESPONSE DEMO - LLM Validation:`);
+    console.log(`  Question: ${question}`);
+    console.log(`  Response: ${badResponse}`);
+    console.log(`  Relevance: ${llmValidation.llmValidation?.relevanceScore}/100`);
+    console.log(`  Appropriateness: ${llmValidation.llmValidation?.appropriatenessScore}/100`);
+    console.log(`  Hallucination: ${llmValidation.llmValidation?.hallucinationDetected ? 'YES' : 'NO'}`);
+    console.log(`  Reasoning: ${llmValidation.llmValidation?.reasoning}`);
+    console.log(`  Status: ${llmValidation.passed ? '✅ PASSED' : '❌ FAILED'}`);
+
+    // This should fail because the response is irrelevant and unprofessional
+    expect(llmValidation.llmValidation?.relevanceScore).toBeGreaterThanOrEqual(70);
+    expect(llmValidation.llmValidation?.appropriatenessScore).toBeGreaterThanOrEqual(70);
+
+    const reportData = {
+      type: 'hardcoded-bad-response',
+      question,
+      response: badResponse,
+      llmValidation: llmValidation.llmValidation,
+      passed: llmValidation.passed,
+      timestamp: new Date().toISOString()
+    };
+
+    saveReport('llm-validation-hardcoded-failure.json', reportData);
+  });
+
+  test.only('LLM Validation - Real Chatbot Edge Case', async () => {
+    // This test demonstrates LLM validating actual chatbot responses for edge cases
+    
+    // Ask a vague/ambiguous question that might produce a poor response
+    const question = "Tell me about stuff";
+    
+    await chat.sendMessage(question);
+    await chat.waitForAIResponse();
+    const aiText = await chat.getLastAIResponse();
+    
+    const llmValidation = await validateWithOpenRouter(
+      question,
+      aiText,
+      OPENROUTER_API_KEY,
+      FREE_MODELS.GEMINI_PRO
+    );
+
+    console.log(`\n🔍 REAL CHATBOT EDGE CASE - LLM Analysis:`);
+    console.log(`  Question: ${question}`);
+    console.log(`  Response: ${aiText.substring(0, 200)}...`);
+    console.log(`  Relevance: ${llmValidation.llmValidation?.relevanceScore}/100`);
+    console.log(`  Appropriateness: ${llmValidation.llmValidation?.appropriatenessScore}/100`);
+    console.log(`  Hallucination: ${llmValidation.llmValidation?.hallucinationDetected ? 'YES' : 'NO'}`);
+    console.log(`  Reasoning: ${llmValidation.llmValidation?.reasoning}`);
+    console.log(`  Status: ${llmValidation.passed ? '✅ PASSED' : '❌ FAILED'}`);
+
+    // This might fail if chatbot gives a vague or inappropriate response
+    expect(llmValidation.llmValidation?.relevanceScore).toBeGreaterThanOrEqual(70);
+    expect(llmValidation.llmValidation?.appropriatenessScore).toBeGreaterThanOrEqual(70);
+
+    const reportData = {
+      type: 'real-chatbot-edge-case',
+      question,
+      response: aiText,
+      llmValidation: llmValidation.llmValidation,
+      passed: llmValidation.passed,
+      timestamp: new Date().toISOString()
+    };
+
+    saveReport('llm-validation-real-edge-case.json', reportData);
   });
 
   test('Answer Correctness - Ground truth comparison', async () => {
