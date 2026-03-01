@@ -24,11 +24,7 @@ test.describe('AI Quality Scoring - Negative Tests', () => {
   });
 
   test('LLM Validation - Hardcoded Bad Response Demo', async () => {
-    // This test demonstrates LLM catching inappropriate/irrelevant hardcoded responses
-    
     const question = "How can I check UAE visa status?";
-    
-    // Hardcoded bad response (irrelevant/unprofessional)
     const badResponse = "I don't know, maybe try Google? Anyway, did you watch the game last night?";
     
     const llmValidation = await validateWithOpenRouter(
@@ -47,7 +43,6 @@ test.describe('AI Quality Scoring - Negative Tests', () => {
     console.log(`  Reasoning: ${llmValidation.llmValidation?.reasoning}`);
     console.log(`  Status: ${llmValidation.passed ? 'PASSED' : 'FAILED'}`);
 
-    // This should fail because the response is irrelevant and unprofessional
     expect(llmValidation.llmValidation?.relevanceScore).toBeLessThan(70);
     expect(llmValidation.llmValidation?.appropriatenessScore).toBeLessThan(70);
 
@@ -64,11 +59,7 @@ test.describe('AI Quality Scoring - Negative Tests', () => {
   });
 
   test('LLM Validation - Hallucination Detection (Negative Test)', async () => {
-    // This test uses a hardcoded hallucinated response with false information
-    
     const question = "What is the visa fee for UAE tourist visa?";
-    
-    // Hardcoded response with hallucinated/false information
     const hallucinatedResponse = "The UAE tourist visa is completely free of charge. Additionally, you will receive a $500 cash bonus upon arrival at Dubai airport. The visa is processed instantly and you don't need any documents.";
     
     const llmValidation = await validateWithOpenRouter(
@@ -86,13 +77,10 @@ test.describe('AI Quality Scoring - Negative Tests', () => {
     console.log(`  Hallucination: ${llmValidation.llmValidation?.hallucinationDetected ? 'DETECTED' : 'NOT DETECTED'}`);
     console.log(`  Reasoning: ${llmValidation.llmValidation?.reasoning}`);
 
-    // This should detect hallucination OR have very low scores
-    // Using flexible assertions since API responses may be incomplete
     const hallucinationDetected = llmValidation.llmValidation?.hallucinationDetected === true;
     const hasLowScores = (llmValidation.llmValidation?.relevanceScore ?? 100) < 30 || 
                          (llmValidation.llmValidation?.appropriatenessScore ?? 100) < 30;
     
-    // Test passes if either hallucination is detected OR scores are very low
     expect(hallucinationDetected || hasLowScores).toBe(true);
 
     const reportData = {
@@ -108,9 +96,6 @@ test.describe('AI Quality Scoring - Negative Tests', () => {
   });
 
   test('LLM Validation - Real Chatbot Edge Case', async () => {
-    // This test demonstrates LLM validating actual chatbot responses for edge cases
-    
-    // Ask a vague/ambiguous question that might produce a poor response
     const question = "Tell me about stuff";
     
     await chat.sendMessage(question);
@@ -133,8 +118,6 @@ test.describe('AI Quality Scoring - Negative Tests', () => {
     console.log(`  Reasoning: ${llmValidation.llmValidation?.reasoning}`);
     console.log(`  Status: ${llmValidation.passed ? 'PASSED' : 'FAILED'}`);
 
-    // This might fail if chatbot gives a vague or inappropriate response
-    // Using soft assertions here since the response quality may vary
     expect(llmValidation.llmValidation?.relevanceScore).toBeDefined();
     expect(llmValidation.llmValidation?.appropriatenessScore).toBeDefined();
 
@@ -151,13 +134,8 @@ test.describe('AI Quality Scoring - Negative Tests', () => {
   });
 
   test.skip('LLM Validation - Hallucination NOT Detected (Expected Failure)', async () => {
-    // This test is designed to FAIL - it expects the LLM to miss hallucination
-    // Skip by default, uncomment test.skip to run and demonstrate failure scenario
-    
-    const question = "What documents do I need for UAE residence visa?";
-    
-    // Response with subtle hallucination that might be missed
-    const subtleHallucinationResponse = "You need your passport, Emirates ID, and a signed letter from the President of UAE approving your application.";
+    const question = "How long does it take to process a UAE work visa?";
+    const subtleHallucinationResponse = "Work visa processing typically takes 5-7 business days. You can track your application online through the ICP portal. For urgent cases, there's a 72-hour express guarantee service available for an additional fee of AED 500.";
     
     const llmValidation = await validateWithOpenRouter(
       question,
@@ -174,8 +152,6 @@ test.describe('AI Quality Scoring - Negative Tests', () => {
     console.log(`  Hallucination: ${llmValidation.llmValidation?.hallucinationDetected ? 'DETECTED' : 'NOT DETECTED'}`);
     console.log(`  Reasoning: ${llmValidation.llmValidation?.reasoning}`);
 
-    // This assertion WILL FAIL if LLM misses the hallucination
-    // The response contains false info: "letter from President" is fabricated
     expect(llmValidation.llmValidation?.hallucinationDetected).toBe(true);
 
     const reportData = {
