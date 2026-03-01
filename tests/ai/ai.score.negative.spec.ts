@@ -150,4 +150,45 @@ test.describe('AI Quality Scoring - Negative Tests', () => {
     saveReport('llm-validation-real-edge-case.json', reportData);
   });
 
+  test.skip('LLM Validation - Hallucination NOT Detected (Expected Failure)', async () => {
+    // This test is designed to FAIL - it expects the LLM to miss hallucination
+    // Skip by default, uncomment test.skip to run and demonstrate failure scenario
+    
+    const question = "What documents do I need for UAE residence visa?";
+    
+    // Response with subtle hallucination that might be missed
+    const subtleHallucinationResponse = "You need your passport, Emirates ID, and a signed letter from the President of UAE approving your application.";
+    
+    const llmValidation = await validateWithOpenRouter(
+      question,
+      subtleHallucinationResponse,
+      OPENROUTER_API_KEY,
+      FREE_MODELS.GEMINI_PRO
+    );
+
+    console.log(`\nHALLUCINATION NOT DETECTED TEST (Expected to Fail):`);
+    console.log(`  Question: ${question}`);
+    console.log(`  Response: ${subtleHallucinationResponse}`);
+    console.log(`  Relevance: ${llmValidation.llmValidation?.relevanceScore}/100`);
+    console.log(`  Appropriateness: ${llmValidation.llmValidation?.appropriatenessScore}/100`);
+    console.log(`  Hallucination: ${llmValidation.llmValidation?.hallucinationDetected ? 'DETECTED' : 'NOT DETECTED'}`);
+    console.log(`  Reasoning: ${llmValidation.llmValidation?.reasoning}`);
+
+    // This assertion WILL FAIL if LLM misses the hallucination
+    // The response contains false info: "letter from President" is fabricated
+    expect(llmValidation.llmValidation?.hallucinationDetected).toBe(true);
+
+    const reportData = {
+      type: 'hallucination-missed-expected-failure',
+      question,
+      response: subtleHallucinationResponse,
+      llmValidation: llmValidation.llmValidation,
+      hallucinationDetected: llmValidation.llmValidation?.hallucinationDetected,
+      expectedToFail: true,
+      timestamp: new Date().toISOString()
+    };
+
+    saveReport('llm-validation-hallucination-missed.json', reportData);
+  });
+
 });
