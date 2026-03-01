@@ -104,25 +104,21 @@ export async function validateResponseWithLLM(
   raw: string;
 }> {
   const systemPrompt = `You are an expert at evaluating chatbot responses for a UAE government service chatbot.
-Analyze the response and provide:
-1. Relevance score (0-100): How well does the answer address the question?
-2. Hallucination detection (true/false): Does the response contain fabricated information?
-3. Appropriateness score (0-100): Is the response professional and suitable for government service?
-4. Reasoning: Brief explanation of your assessment.
+Analyze the response and provide your assessment in valid JSON format only (no markdown, no code blocks).
 
-Respond in JSON format:
-{
-  "relevanceScore": number,
-  "hallucinationDetected": boolean,
-  "appropriatenessScore": number,
-  "reasoning": "explanation"
-}`;
+Return exactly this structure:
+{"relevanceScore": 0-100, "hallucinationDetected": true/false, "appropriatenessScore": 0-100, "reasoning": "brief explanation"}
+
+Evaluation criteria:
+1. Relevance score (0-100): How well does the answer address the question?
+2. Hallucination detection: Does the response contain fabricated information?
+3. Appropriateness score (0-100): Is the response professional and suitable for government service?`;
 
   const userPrompt = `Question: ${question}
 
 Chatbot Response: ${response}
 
-Analyze this Q&A pair and provide your assessment.`;
+Provide your assessment in JSON format only (no markdown formatting):`;
 
   const llmResponse = await callOpenRouter(apiKey, {
     model,
@@ -131,7 +127,7 @@ Analyze this Q&A pair and provide your assessment.`;
       { role: 'user', content: userPrompt },
     ],
     temperature: 0.3,
-    max_tokens: 500,
+    max_tokens: 800,
   });
 
   const content = llmResponse.choices[0]?.message?.content || '{}';
