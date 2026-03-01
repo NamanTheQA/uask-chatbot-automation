@@ -153,7 +153,7 @@ test.describe('AI Batch Quality Scoring', () => {
 
   });
 
-  test.only('Context Recall - Completeness coverage', async () => {
+  test('Context Recall - Completeness coverage', async () => {
 
     const prompt = prompts[0];
     await chat.sendMessage(prompt.text);
@@ -196,7 +196,7 @@ test.describe('AI Batch Quality Scoring', () => {
 
   });
 
-  test.only('LLM Validation - Hardcoded Bad Response Demo', async () => {
+  test('LLM Validation - Hardcoded Bad Response Demo', async () => {
     // This test demonstrates LLM catching inappropriate/irrelevant hardcoded responses
     
     const question = "How can I check UAE visa status?";
@@ -236,7 +236,7 @@ test.describe('AI Batch Quality Scoring', () => {
     saveReport('llm-validation-hardcoded-failure.json', reportData);
   });
 
-  test.only('LLM Validation - Mediocre Response (70-90 range)', async () => {
+  test('LLM Validation - Mediocre Response (70-90 range)', async () => {
     // This test demonstrates LLM evaluating a partially correct but incomplete response
     
     // Ask a question where chatbot might give generic/vague answer
@@ -278,7 +278,7 @@ test.describe('AI Batch Quality Scoring', () => {
     saveReport('llm-validation-mediocre-response.json', reportData);
   });
 
-  test.only('LLM Validation - Real Chatbot Edge Case', async () => {
+  test('LLM Validation - Real Chatbot Edge Case', async () => {
     // This test demonstrates LLM validating actual chatbot responses for edge cases
     
     // Ask a vague/ambiguous question that might produce a poor response
