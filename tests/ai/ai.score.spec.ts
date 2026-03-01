@@ -236,6 +236,48 @@ test.describe('AI Batch Quality Scoring', () => {
     saveReport('llm-validation-hardcoded-failure.json', reportData);
   });
 
+  test.only('LLM Validation - Mediocre Response (70-90 range)', async () => {
+    // This test demonstrates LLM evaluating a partially correct but incomplete response
+    
+    // Ask a question where chatbot might give generic/vague answer
+    const question = "How can I renew my visa?";
+    
+    await chat.sendMessage(question);
+    await chat.waitForAIResponse();
+    const aiText = await chat.getLastAIResponse();
+    
+    const llmValidation = await validateWithOpenRouter(
+      question,
+      aiText,
+      OPENROUTER_API_KEY,
+      FREE_MODELS.GEMINI_PRO
+    );
+
+    console.log(`\n⚠️  MEDIOCRE RESPONSE DEMO - LLM Validation:`);
+    console.log(`  Question: ${question}`);
+    console.log(`  Response: ${aiText.substring(0, 200)}...`);
+    console.log(`  Relevance: ${llmValidation.llmValidation?.relevanceScore}/100`);
+    console.log(`  Appropriateness: ${llmValidation.llmValidation?.appropriatenessScore}/100`);
+    console.log(`  Hallucination: ${llmValidation.llmValidation?.hallucinationDetected ? 'YES' : 'NO'}`);
+    console.log(`  Reasoning: ${llmValidation.llmValidation?.reasoning}`);
+    console.log(`  Status: ${llmValidation.passed ? '✅ PASSED' : '❌ FAILED'}`);
+
+    // This should pass but might have lower scores depending on response quality
+    expect(llmValidation.llmValidation?.relevanceScore).toBeGreaterThanOrEqual(70);
+    expect(llmValidation.llmValidation?.appropriatenessScore).toBeGreaterThanOrEqual(70);
+
+    const reportData = {
+      type: 'mediocre-response',
+      question,
+      response: aiText,
+      llmValidation: llmValidation.llmValidation,
+      passed: llmValidation.passed,
+      timestamp: new Date().toISOString()
+    };
+
+    saveReport('llm-validation-mediocre-response.json', reportData);
+  });
+
   test.only('LLM Validation - Real Chatbot Edge Case', async () => {
     // This test demonstrates LLM validating actual chatbot responses for edge cases
     
