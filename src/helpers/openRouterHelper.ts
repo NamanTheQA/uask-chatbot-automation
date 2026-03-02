@@ -127,7 +127,7 @@ Provide your assessment in JSON format only (no markdown formatting):`;
       { role: 'user', content: userPrompt },
     ],
     temperature: 0.3,
-    max_tokens: 1200,
+    max_tokens: 900,
   });
 
   let content = llmResponse.choices[0]?.message?.content || '{}';
