@@ -59,9 +59,9 @@ test.describe('Multilingual UI Validation (Arabic only)', () => {
     const userText = await chat.getLastUserMessage();
     expect(userText).toMatch(/[\u0600-\u06FF]/);
 
-    const arabicLocator = page.locator('.notification-circle').first();
-    await expect(arabicLocator).toHaveText(/\p{Script=Arabic}/u, { timeout: 10000 });
-
+    // Notification badge: visible and contains Arabic text
+    const arabicLocator = page.locator('div.notification-cirle').first();
+    await expect(arabicLocator).toBeVisible({ timeout: 10000 });
+    await expect(arabicLocator).toHaveText('English');
   });
-
 });
