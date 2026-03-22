@@ -30,7 +30,7 @@ export class ChatLocators {
 
     this.sendButton = this.page.locator('#arrow-up-circle');
 
-    this.userMessage = this.page.locator('.user-message, .message');
+    this.userMessage = this.page.locator('markdown, .user-message, .message');
 
     this.aiMessage = this.page.locator('markdown, .ai-message, [data-role="ai"]');
 

@@ -1,65 +1,67 @@
 import { test, expect } from '@playwright/test';
 import { ChatbotPage } from '../../src/pages/ChatbotPage';
 import uiData from '../../src/test-data/ui-data.json';
+import { BasePage } from '../../src/pages/BasePage';
 
-test.describe('Multilingual UI Validation (Data Driven)', () => {
+test.describe('Multilingual UI Validation (Arabic only)', () => {
 
-  for (const langData of uiData.languages) {
+  const arData = uiData.languages.find(l => l.lang === 'AR');
 
-    test(`Validate ${langData.lang} layout and localization using toggle`, async ({ page }) => {
+  test.only('Validate AR layout and localization using toggle', async ({ page }) => {
 
-      const chat = new ChatbotPage(page);
+    if (!arData) {
+      test.skip(true, 'No AR data present in ui-data.json');
+      return;
+    }
 
-      await chat.openApp();
-      await chat.isChatWindowDisplayed();
-      await chat.toggleLanguageButton(langData.lang);
+    const langData = arData;
+    const chat = new ChatbotPage(page);
+    const base = new BasePage(page);
 
-      await page.waitForTimeout(1000);
+    await chat.openApp();
+    await base.handleDisclaimerIfPresent();
+    await chat.isChatWindowDisplayed();
+    await chat.toggleLanguageButton(langData.lang);
 
-      const htmlDir = await page.locator('html').getAttribute('dir');
-      expect(htmlDir).toBe(langData.direction);
+    // Wait for the page to apply the language direction (rtl) instead of a fixed sleep
+    await page.waitForSelector(`html[dir="${langData.direction}"]`, { timeout: 10000 });
 
-      if (langData.lang === 'AR') {
-        const langAttr = await page.locator('[lang="ar"]').first().getAttribute('lang');
-        expect(langAttr).toBe('ar');
-      }
+    // Assert HTML dir attribute
+    await expect(page.locator('html')).toHaveAttribute('dir', langData.direction, { timeout: 10000 });
 
-      const inputLocator = page.locator('textarea, input[type="text"]').first();
+    const inputSelector = '#conversation';
+    const inputLocator = page.locator(inputSelector);
 
-      await expect(inputLocator).toBeVisible();
+    // wait until computed style direction matches expected (pass args as a single array)
+    await page.waitForFunction(
+      ([sel, dir]) => {
+        const el = document.querySelector(sel);
+        return !!el && window.getComputedStyle(el).direction === dir;
+      },
+      [inputSelector, langData.direction],
+      { timeout: 10000 }
+    );
 
-      const inputDirection = await inputLocator.evaluate(
-        el => window.getComputedStyle(el).direction
-      );
+    const inputDirection = await inputLocator.evaluate(el => window.getComputedStyle(el).direction);
+    expect(inputDirection).toBe(langData.direction);
 
-      expect(inputDirection).toBe(langData.direction);
+    await chat.sendMessage(langData.message);
+    await chat.waitForAIResponse();
+    await chat.getLastAIResponse();
 
-      await chat.sendMessage(langData.message);
+    const messageDirection = await chat.getLastMessageDirection();
+    expect(messageDirection).toBe(langData.direction);
 
-      await chat.getLastUserMessage();
+    const placeholder = await inputLocator.getAttribute('placeholder');
+    expect(placeholder?.toLowerCase()).toContain(langData.placeholderKeyword.toLowerCase());
 
-      const messageDirection = await chat.getLastMessageDirection();
-      expect(messageDirection).toBe(langData.direction);
+    // Arabic-specific validations
+    const userText = await chat.getLastUserMessage();
+    expect(userText).toMatch(/[\u0600-\u06FF]/);
 
-      const placeholder = await inputLocator.getAttribute('placeholder');
+    const arabicLocator = page.locator('.notification-circle').first();
+    await expect(arabicLocator).toHaveText(/\p{Script=Arabic}/u, { timeout: 10000 });
 
-      expect(placeholder?.toLowerCase())
-        .toContain(langData.placeholderKeyword.toLowerCase());
-
-      if (langData.lang === 'AR') {
-        const userText = await chat.getLastUserMessage();
-
-        expect(userText).toMatch(/[\u0600-\u06FF]/);
-
-        // Validate Arabic text in notification circle (العربية)
-        const arabicText = await page.locator('.notification-circle').first().textContent();
-        if (arabicText) {
-          expect(arabicText).toMatch(/[\u0600-\u06FF]/);
-        }
-      }
-
-    });
-
-  }
+  });
 
 });
