@@ -31,10 +31,6 @@ test.describe('AI Batch Quality Scoring', () => {
     await chat.isChatWindowDisplayed();
   });
 
-  // ========================================
-  // LLM as a Judge Tests
-  // ========================================
-
   test('Context Recall - Completeness coverage', async () => {
 
     const prompt = prompts[0];

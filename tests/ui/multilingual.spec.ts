@@ -7,7 +7,7 @@ test.describe('Multilingual UI Validation (Arabic only)', () => {
 
   const arData = uiData.languages.find(l => l.lang === 'AR');
 
-  test.only('Validate AR layout and localization using toggle', async ({ page }) => {
+  test('Validate AR layout and localization using toggle', async ({ page }) => {
 
     if (!arData) {
       test.skip(true, 'No AR data present in ui-data.json');
