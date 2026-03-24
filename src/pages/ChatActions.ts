@@ -46,16 +46,9 @@ export class ChatActions {
   }
 
   async waitForAIResponse() {
-    // Wait for loader to appear (AI is thinking)
     await this.locators.loader.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
-    
-    // Wait for loader to disappear (AI finished thinking)
     await this.locators.loader.waitFor({ state: 'hidden', timeout: 50000 }).catch(() => {});
-    
-    // Wait for message element to appear
     await this.locators.aiMessage.last().waitFor({ timeout: 180000 });
-    
-    // Wait for streaming to complete (text content stabilizes)
     await this.page.waitForTimeout(12000);
     
     // Additional check: wait for no text changes (streaming stopped)
@@ -67,7 +60,7 @@ export class ChatActions {
       const currentText = await messageElement.textContent();
       if (currentText === previousText) {
         stableCount++;
-        if (stableCount >= 3) break; // Text stable for 3 checks
+        if (stableCount >= 3) break;
       } else {
         stableCount = 0;
         previousText = currentText || '';
@@ -125,12 +118,8 @@ export class ChatActions {
     
     await toggle.waitFor({ state: 'visible', timeout: 5000 });
     await toggle.click();
-    
-    // Wait for page to reload/refresh with new language
     await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
     await this.page.waitForSelector('.targeted-loader-fullhide', { state: 'hidden', timeout: 10000 }).catch(() => {});
-    
-    // Ensure chat window is still visible after refresh
     await expect(this.locators.chatWindow).toBeVisible();
   }
 }
