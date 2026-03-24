@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { BasePage } from '../../src/pages/BasePage';
 import { ChatbotPage } from '../../src/pages/ChatbotPage';
 import securityData from '../../src/test-data/security-data.json';
 
@@ -8,8 +9,10 @@ test.describe('U-Ask Security & Injection Handling', () => {
 
   test.beforeEach(async ({ page }) => {
     chat = new ChatbotPage(page);
+    const base = new BasePage(page);
     await chat.openApp();
     await chat.isChatWindowDisplayed();
+    await base.handleDisclaimerIfPresent();
   });
 
   test('XSS input is sanitized and does not execute script', async ({ page }) => {
@@ -22,12 +25,12 @@ test.describe('U-Ask Security & Injection Handling', () => {
     });
 
     await chat.sendMessage(securityData.xssPayload);
+    await chat.waitForAIResponse();
 
     const userText = await chat.getLastUserMessage();
 
     expect(userText).toContain(securityData.xssEscapedCheck);
     expect(dialogTriggered).toBeFalsy();
-
   });
 
   test('Prompt injection attempt is blocked', async () => {
@@ -86,9 +89,6 @@ test('AI does not leak internal or sensitive data', async () => {
     for (const forbidden of securityData.leakageForbiddenPatterns) {
       expect(aiText).not.toContain(forbidden);
     }
-
   }
-
 });
-
 });
